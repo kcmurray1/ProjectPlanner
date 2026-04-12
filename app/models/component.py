@@ -15,6 +15,8 @@ class ComponentBase(SQLModel):
     name: str
     x_pos: float
     y_pos: float
+    height: int
+    width: int
 
 class Component(ComponentBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

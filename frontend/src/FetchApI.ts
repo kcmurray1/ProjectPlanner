@@ -1,13 +1,18 @@
+import type { Component } from "react"
 
 interface IComponent {
     id: number
     name: string
     y_pos: number
     x_pos: number
-
+    height: number
+    width: number
 }
 
+
 export type GetComponents = IComponent[] 
+
+export type GetComponent = IComponent 
 
 
 const BASE_URL = "http://localhost:8000";

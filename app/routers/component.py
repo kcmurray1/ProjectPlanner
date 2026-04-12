@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
 from app.dependencies import get_session
 from app.models.component import Component, ComponentLink, LinkCreate, ComponentReadWithRelationships, ComponentRead
 from sqlalchemy.exc import IntegrityError
+from typing import List 
 
 router = APIRouter(
     prefix="/components",
@@ -20,6 +21,15 @@ async def create_component(component: Component, session: Session = Depends(get_
     session.commit()
     session.refresh(component)
     return component
+
+@router.delete("/bulk-delete")
+async def delete_component(ids: List[int], session: Session = Depends(get_session)):
+    print('deleting components', ids)
+    statement = delete(Component).where(Component.id.in_(ids))
+    results = session.exec(statement)
+    session.commit()
+    
+    return {"status": "ok!"}
 
 @router.get("/{id}", response_model=ComponentReadWithRelationships)
 async def read_component(id: int, session: Session = Depends(get_session)):
@@ -40,14 +50,9 @@ async def read_component(id: int, session: Session = Depends(get_session)):
 @router.patch("/{id}", response_model=ComponentRead)
 async def update_component(id: int, component_data: dict, session: Session = Depends(get_session)):
     db_comp = session.get(Component, id)
-  
-    
-    # 2. Update only the fields provided in the request
-    # This allows you to send JUST x_pos and y_pos without sending the name
-    
-    db_comp.x_pos = component_data['x_pos']
-    
-    db_comp.y_pos = component_data['y_pos']
+    db_comp.model_dump(exclude_unset=True)
+    db_comp.sqlmodel_update(component_data)
+
     session.add(db_comp)
     session.commit()
     session.refresh(db_comp)
