@@ -63,6 +63,15 @@ function TextNode({id, data, selected}: NodeProps) {
         , []
     )
 
+    const handleDoubleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+        e.stopPropagation()
+
+        if (isEditing)
+        {
+            e.currentTarget.select();
+        }
+    }
+
     
     return (
         <div className="text-updater-node">
@@ -79,7 +88,16 @@ function TextNode({id, data, selected}: NodeProps) {
             <BiDirectionalHandle id={"top"} position={Position.Top} />
             <BiDirectionalHandle id={"bottom"} position={Position.Bottom} />
             <div style={{ height: '100%', width: '100%' }}>     
-                <input id="text" name="text" onChange={onChange} onBlur={onBlur} onKeyDown={handleKeyDown} value={value} disabled={!isEditing}/>
+                <input id="text" 
+                    name="text" 
+                    onChange={onChange} 
+                    onBlur={onBlur} 
+                    onKeyDown={handleKeyDown} 
+                    value={value} 
+                    disabled={!isEditing} 
+                    className={isEditing ? "nodrag nopan" : ""}
+                    onDoubleClick={handleDoubleClick}
+                    />
             </div>
    
             

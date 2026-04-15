@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
 from app.dependencies import get_session
-from app.models.component import Component, ComponentLink, LinkCreate, ComponentReadWithRelationships, ComponentRead
+from app.models.component import Component, ComponentReadWithRelationships, ComponentRead
+from app.models.edge import Edge
 from sqlalchemy.exc import IntegrityError
-from typing import List 
-
+from typing import List, Optional
 router = APIRouter(
     prefix="/components",
     tags=["components"]
@@ -17,10 +17,36 @@ async def read_components(session: Session = Depends(get_session)):
 
 @router.post("/")
 async def create_component(component: Component, session: Session = Depends(get_session)):
+
+    if component.parent_id == 0:
+        component.parent_id = None
     session.add(component)
     session.commit()
     session.refresh(component)
     return component
+
+@router.get("/diagram")
+async def read_components(parent_id: Optional[int]=None, session: Session = Depends(get_session)):
+    statement = select(Component, Edge).join(Edge, Edge.source == Component.id, isouter=True)
+
+    if not parent_id or parent_id is None:
+        statement = statement.where(Component.parent_id == None)
+    else:
+        statement = statement.where(Component.parent_id == parent_id)
+
+    pane = session.exec(statement).all()
+    
+    nodes_temp = {}
+    edges = []
+    for component, edge in pane:
+        
+        if component.id not in nodes_temp:
+            nodes_temp[component.id] = component
+
+        if edge:
+            edges.append(edge)        
+    return {"nodes": list(nodes_temp.values()), "edges": edges}
+    
 
 @router.delete("/bulk-delete")
 async def delete_component(ids: List[int], session: Session = Depends(get_session)):
@@ -49,6 +75,9 @@ async def read_component(id: int, session: Session = Depends(get_session)):
 
 @router.patch("/{id}", response_model=ComponentRead)
 async def update_component(id: int, component_data: dict, session: Session = Depends(get_session)):
+
+
+      
     db_comp = session.get(Component, id)
     db_comp.model_dump(exclude_unset=True)
     db_comp.sqlmodel_update(component_data)
@@ -57,16 +86,4 @@ async def update_component(id: int, component_data: dict, session: Session = Dep
     session.commit()
     session.refresh(db_comp)
     return db_comp
-
-
-@router.post("/links")
-async def create_link(link_data: LinkCreate, session: Session = Depends(get_session)):
-    try:
-        new_link = ComponentLink(parent_id=link_data.parent_id, child_id=link_data.child_id)
-        session.add(new_link)
-        session.commit()
-    except IntegrityError:
-        return {"message": "link already exists!"}
-
-    return new_link
 

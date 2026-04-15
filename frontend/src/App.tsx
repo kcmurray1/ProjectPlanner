@@ -45,15 +45,19 @@ export default function App() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [menu, setMenu] = useState<{x: number; y: number; top: number; left: number} | null>(null);
+  const [pane, setPane] = useState<number>(0);
 
-  const loadNodes = async () => {
+  const loadNodes = async (paneID: number) => {
       try {
-        const response = await CustomApiRequest<GetComponents>('components', null, "GET")
 
-        if (!response || response.length === 0){
-          return
-        }
-        const myNodes = response.map((component) => ({
+        const res = await CustomApiRequest<{nodes: GetComponents, edges: Edge[]}>(`components/diagram?parent_id=${paneID}`, null, "GET")
+
+        const {nodes, edges} = res
+
+        console.log('results', nodes, edges)
+
+      
+        const myNodes = nodes.map((component) => ({
           id: component.id.toString(),
           data: { label: component.name },
           position: { x: component.x_pos, y: component.y_pos },
@@ -61,17 +65,14 @@ export default function App() {
           width: component.width,
           height: component.height
         }))
-
-        const edgeResponse = await CustomApiRequest<Edge[]>('edges', null, "GET")
         
-        const myEdges = edgeResponse.map((edge) => ({
+        const myEdges = edges.map((edge) => ({
           id: String(edge.id),
           source: String(edge.source),
           sourceHandle: String(edge.sourceHandle),
           target: String(edge.target),
           targetHandle: String(edge.targetHandle) 
         }))
-        console.log(myEdges)
         setNodes(myNodes);
         setEdges(myEdges)
       } catch (err) {
@@ -82,7 +83,7 @@ export default function App() {
   // Check for any nodes otherwise load default initialNodes
   useEffect( () => 
   {
-    loadNodes();
+    loadNodes(pane);
   }, [])
   
   // Allows movement of Nodes
@@ -136,8 +137,10 @@ export default function App() {
   const handleNodeDoubleClick: NodeMouseHandler<Node> = useCallback(
      async (_: React.MouseEvent, node: Node) =>
      {
-        console.log(node);
-     }, []
+        // console.log(node);
+        setPane(Number(node.id))
+        await loadNodes(Number(node.id));
+     }, [loadNodes, setPane]
   )
 
   const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
@@ -214,7 +217,7 @@ export default function App() {
   const handleAddNode = async (x: number, y: number) => {
     // API create
     try {
-      const result = await CustomApiRequest<GetComponent>(`components`, {name: 'New Node', x_pos: x, y_pos: y, width: 230, height: 78}, "POST")
+      const result = await CustomApiRequest<GetComponent>(`components`, {name: 'New Node', x_pos: x, y_pos: y, width: 230, height: 78, parent_id: pane}, "POST")
       const newNode = {
         id: String(result.id),
         type: 'textNode',
@@ -230,57 +233,99 @@ export default function App() {
 
     setMenu(null)
   }
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div style={{ width: '50vw', height: '100vh' }}>
-    <ReactFlow
-      nodes={nodes}
-      nodeTypes={nodeTypes}
-      onNodeDoubleClick={handleNodeDoubleClick}
-      onNodesDelete={handleNodeDelete}
-      onEdgesDelete={handleEdgeDelete}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      onPaneContextMenu={onPaneContextMenu}
-      onPaneClick={onPaneClick}
-      onNodeContextMenu={onNodeContextMenu}
-      onNodeDragStop={onNodeDragStop}
-      fitView
-      fitViewOptions={fitViewOptions}
-      defaultEdgeOptions={defaultEdgeOptions}
-      selectionOnDrag={true}
-      selectionKeyCode={null}
-      panOnDrag = {[1]}
+    
+    <div className="flex h-screen w-full overflow-hidden" >
+      <aside
+    className={`
+      transition-all duration-300 ease-in-out border-r bg-white dark:bg-zinc-900 overflow-hidden
+      /* Desktop: Toggle between 64 and 0 */
+      ${isOpen ? 'w-64' : 'w-0 md:w-16'} 
+      /* Mobile: Fixed overlay */
+      fixed inset-y-0 left-0 z-50 md:relative md:translate-x-0
+      ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}
+  >
+        <div className="flex flex-col h-full p-4 overflow-hidden">
+            <header className="flex h-14 items-center border-b bg-white px-4 dark:bg-zinc-900">
+              <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+              >
+                {/* Menu Icon */}
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </header>
+            <nav className="mt-4 flex-grow space-y-1 overflow-y-auto">
+              <button className="w-full text-left p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                {isOpen ? '🏠 Home' : '🏠'}
+              </button>
+              <button className="w-full text-left p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                📁 Components
+              </button>
+              <button className="w-full text-left p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                ⚙️ Settings
+              </button>
+            </nav>
+      </div>
+      </aside>
+  
+   
+      <div className="relative flex-grow h-full">
+        <ReactFlow
+          nodes={nodes}
+          nodeTypes={nodeTypes}
+          onNodeDoubleClick={handleNodeDoubleClick}
+          onNodesDelete={handleNodeDelete}
+          onEdgesDelete={handleEdgeDelete}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onPaneContextMenu={onPaneContextMenu}
+          onPaneClick={onPaneClick}
+          onNodeContextMenu={onNodeContextMenu}
+          onNodeDragStop={onNodeDragStop}
+          fitView
+          fitViewOptions={fitViewOptions}
+          defaultEdgeOptions={defaultEdgeOptions}
+          selectionOnDrag={true}
+          selectionKeyCode={null}
+          panOnDrag = {[1]}
 
-    > 
-    <Background />
-     
-    <Controls />
-    <MiniMap/>
-    </ReactFlow>
-     {menu && (  
-        <div
-          style={{
-            position: 'absolute',
-            top: menu.top,
-            left: menu.left,
-            zIndex: 1000,
-            backgroundColor: '#222',
-            border: '1px solid #555',
-            borderRadius: '4px',
-            padding: '5px'
-          }}
-        >
-          <button 
-            onClick={() => handleAddNode(menu.x, menu.y)}
-            style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            + Add Component
-          </button>
-        </div> 
-      )}
-    </div>
+        > 
+        <Background />
+        
+        <Controls />
+        <MiniMap/>
+        </ReactFlow>
+        {menu && (  
+            <div
+              style={{
+                position: 'absolute',
+                top: menu.top,
+                left: menu.left,
+                zIndex: 1000,
+                backgroundColor: '#222',
+                border: '1px solid #555',
+                borderRadius: '4px',
+                padding: '5px'
+              }}
+            >
+              <button 
+                onClick={() => handleAddNode(menu.x, menu.y)}
+                style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                + Add Component
+              </button>
+            </div> 
+          )}
+      </div>
+      </div>
+    
   );
 }
