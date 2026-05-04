@@ -76,9 +76,8 @@ async def read_component(id: int, session: Session = Depends(get_session)):
 @router.patch("/{id}", response_model=ComponentRead)
 async def update_component(id: int, component_data: dict, session: Session = Depends(get_session)):
 
-
-      
     db_comp = session.get(Component, id)
+
     db_comp.model_dump(exclude_unset=True)
     db_comp.sqlmodel_update(component_data)
 
@@ -86,4 +85,45 @@ async def update_component(id: int, component_data: dict, session: Session = Dep
     session.commit()
     session.refresh(db_comp)
     return db_comp
+
+@router.post("/groups")
+async def create_component_group(data: dict, session: Session = Depends(get_session)):
+    print(data)
+    # Check if nodes are already part of group
+    node_ids = data.get("nodes")
+    # create group component
+    statement = select(Component).where(Component.id.in_(node_ids))
+    
+    children = session.exec(statement).all()
+
+    base_node = children[0]
+
+    new_group = Component(
+        name="New Group",
+        type="groupComponent",
+        x_pos=base_node.x_pos,
+        y_pos=base_node.y_pos,
+        width=base_node.width * 2,   
+        height=base_node.height * 2,
+        parent_id=base_node.parent_id 
+    )
+
+    session.add(new_group)
+    session.flush()
+
+    for child in children:
+        if child.parent_id:
+            print(f"Node {child.id} is moving from group {child.group_id} to {new_group.id}")
+            return 
+        child.group_id = new_group.id
+        child.x_pos -= new_group.x_pos
+        child.y_pos -= new_group.y_pos
+        session.add(child)
+    
+
+    session.commit()
+    session.refresh(new_group)
+
+    return new_group
+
 

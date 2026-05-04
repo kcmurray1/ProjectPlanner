@@ -106,13 +106,7 @@ p {
   background: white;
 }
 
-/* .text-updater-node-full {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  background: white;
-} */
+
 
 .text-updater-node div {
   flex-grow: 1;
@@ -135,4 +129,19 @@ p {
 .text-updater-node input:disabled {
   pointer-events: none;
   cursor: grab;
+}
+
+.react-flow__handle.textnode-handle {
+  width: 20px;
+  height: 20px;
+  background-color: rgb(70, 84, 90);
+  border-radius: 4px;
+}
+
+.custom-group-component {
+   height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgba(253, 253, 253, 0.479);
 }

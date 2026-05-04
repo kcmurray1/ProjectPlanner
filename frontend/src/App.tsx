@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, Component } from 'react';
 import {
   useReactFlow,
   ReactFlow,
@@ -17,18 +17,18 @@ import {
   type OnNodeDrag,
   type DefaultEdgeOptions,
   type NodeMouseHandler,
-  type OnNodesDelete,
-  type OnEdgesDelete,
+  type OnBeforeDelete,
 } from '@xyflow/react';
 
-import TextNode from './TextNode';
+import { TextNode } from './TextNode';
+import CustomGroupComponent from './CustomGroupComponent';
 import { CustomApiRequest, type GetComponents, type GetComponent} from './FetchApI';
+
  
 
-const nodeTypes = {textNode: TextNode}
- 
-// const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2' }];
- 
+const nodeTypes = {textNode: TextNode, groupComponent: CustomGroupComponent}
+
+const groupName = "groupComponent"
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -41,31 +41,42 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 
  
 export default function App() {
+  const { getIntersectingNodes } = useReactFlow();
   const { screenToFlowPosition } = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [menu, setMenu] = useState<{x: number; y: number; top: number; left: number} | null>(null);
   const [pane, setPane] = useState<number>(0);
 
-  const loadNodes = async (paneID: number) => {
+  const loadNodes = useCallback(async (paneID: number) => {
       try {
-
+        console.log('loading nodes')
         const res = await CustomApiRequest<{nodes: GetComponents, edges: Edge[]}>(`components/diagram?parent_id=${paneID}`, null, "GET")
+        console.log(res)
+        const {nodes, edges} = res      
 
-        const {nodes, edges} = res
+        //Ensure groups nodes are created first, nested groups are unsupported
+        const sortedData = [...nodes].sort((a, b) => {
+          if (a.type === groupName && b.type !== groupName) return -1;
+          if (a.type !== groupName && b.type === groupName) return 1;
+          return 0;
+        });
 
-        console.log('results', nodes, edges)
+         const myNodes = sortedData.map((component) => {
+          return {
+            id: component.id.toString(),
+            data: { label: component.name },
+            position: { x: component.x_pos, y: component.y_pos },
+            type: component.type,
+            width: component.width,
+            height: component.height,
+            ...(component.group_id && { 
+              parentId: component.group_id ? String(component.group_id) : "",
+              extent: component.type === groupName ? null : "parent" as const})
+          }
+          
+        })
 
-      
-        const myNodes = nodes.map((component) => ({
-          id: component.id.toString(),
-          data: { label: component.name },
-          position: { x: component.x_pos, y: component.y_pos },
-          type: 'textNode',
-          width: component.width,
-          height: component.height
-        }))
-        
         const myEdges = edges.map((edge) => ({
           id: String(edge.id),
           source: String(edge.source),
@@ -79,76 +90,156 @@ export default function App() {
 
       }
     
-    }
-  // Check for any nodes otherwise load default initialNodes
+    }, []);
   useEffect( () => 
   {
     loadNodes(pane);
-  }, [])
-  
-  // Allows movement of Nodes
+  }, [pane])
+
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     [setNodes],
   );
 
-  // save location of node to DB
+  const onNodeDrag: OnNodeDrag<Node> = useCallback(
+    (_ , node) => {
+
+      const intersections = getIntersectingNodes(node).filter((nd) => {
+        return nd.parentId !== node.id && node.parentId !== nd.id
+      })
+      const intersectionsIds = intersections.map((n) => n.id);
+      
+      setNodes((currentNodes) =>
+        currentNodes.map((n) => {
+          const isHighlighted = intersectionsIds.includes(n.id);
+          if (node.parentId && node.parentId === n.id)
+          {
+            return n;
+          }
+          return {
+            ...n,
+            className: isHighlighted ? 'ring-4 ring-blue-500 shadow-lg' : ''
+          }
+        })
+      );
+    }, [getIntersectingNodes, setNodes])
+
   const onNodeDragStop: OnNodeDrag<Node> = useCallback(
     async (_, node) => {
+
       const payload = {
         x_pos : node.position.x,
         y_pos: node.position.y
       };
       try {
         const result = await CustomApiRequest<{x: number, y: number}>(`components/${node.id}`, payload, "PATCH")
-        console.log("Position synced to DB:", result);
+       
+        
+        const intersections = getIntersectingNodes(node).filter((nd) => {
+          return (
+              !nd.parentId && 
+              nd.parentId !== node.id && 
+              node.parentId !== nd.id
+            );
+        });
+  
+        
+        if (intersections.length > 0) {
+         
+          let targetNode = intersections[0]
+          let newGroupNode = null
+
+          if (targetNode.type === groupName)
+          {
+            console.log("adding to group")
+            const res = await CustomApiRequest<GetComponent>(`components/${node.id}`, {"group_id": targetNode.id}, "PATCH")
+          }
+          else{
+            console.log('creating group..')
+            const payload = {"nodes": [node.id, targetNode.id]}
+            const result = await CustomApiRequest<GetComponent>(`components/groups`, payload, "POST")
+          
+            console.log('created', result)
+            newGroupNode = {
+              id: String(result.id),
+              type:  result.type,
+              data: {label: 'gorup'},
+              style: { width: result.width, height: result.height },
+              position: {x: result.x_pos, y: result.y_pos}
+            }
+          }
+         
+         
+          // dragged node adds component as group parent
+          setNodes((nds) => {
+            const baseNodes = newGroupNode ? [newGroupNode,...nds] : nds
+            const newParentNode = newGroupNode ? newGroupNode : targetNode
+
+            return baseNodes.map((nd) => {
+              if (nd.id === node.id || (newGroupNode && nd.id == targetNode.id))
+              {
+                console.log(nd.type, nd.id)
+                return {
+                  ...nd,
+                  extent: 'parent',
+                  parentId: newParentNode.id,
+                  position : {
+                    x: nd.position.x - newParentNode.position.x,
+                    y: nd.position.y - newParentNode.position.y
+                  }
+                }
+              }
+              return nd
+            });
+
+          
+          
+          })
+        }
+      
 
       } catch (err) {
         console.error("Failed to save node position:", err);
       }
     },
-    [setNodes],
+    [setNodes, getIntersectingNodes],
   );
 
-  const handleNodeDelete: OnNodesDelete<Node> = useCallback(
-    async (nodes: Node[]) => {
+  const handleBeforeDelete: OnBeforeDelete<Node, Edge> = useCallback(
+    async({nodes, edges}) => {
       try {
+        if (edges.length > 0)
+        {
+          const result = await CustomApiRequest<{status: string}>(`edges/bulk-delete`, edges.map((edge) => Number(edge.id)).filter((id) => !isNaN(id)), "DELETE");
+        }
+        
+        if (nodes.length > 0)
+        {
+           const result = await CustomApiRequest<{id: number}>(`components/bulk-delete`, nodes.map((node) => node.id), "DELETE");
+        }
 
-        const result = await CustomApiRequest<{id: number}>(`components/bulk-delete`, nodes.map((node) => node.id), "DELETE");
-        console.log(result);
+        return true
       } catch (err) {
         console.log(err);
+        return false
       }
-    }, [setNodes]
+     
+
+    }, []
   )
 
-  const handleEdgeDelete: OnEdgesDelete<Edge> = useCallback(
-    async (edges: Edge[]) => {
-      try {
-        console.log(edges)
-        const result = await CustomApiRequest<{status: string}>(`edges/bulk-delete`, edges.map((edge) => edge.id), "DELETE");
-        console.log(result);
-      } catch (err) {
-        console.log(err);
-      }
-    }, [setEdges]
-  )
 
   const handleNodeDoubleClick: NodeMouseHandler<Node> = useCallback(
      async (_: React.MouseEvent, node: Node) =>
      {
-        // console.log(node);
         setPane(Number(node.id))
-        await loadNodes(Number(node.id));
-     }, [loadNodes, setPane]
+     }, [setPane]
   )
 
   const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
     async  (event , node) => {
       event.preventDefault();
-      
       // popup menu to give options to delete or rename
-      console.log(node)
       setNodes((nds) =>
       nds.map((nd) => {
         if (nd.id === node.id) {
@@ -172,11 +263,14 @@ export default function App() {
   );
   const onConnect: OnConnect = useCallback(
     async (connection) => {
-      
-      setEdges((eds) => addEdge(connection, eds))
       try {
         const result = await CustomApiRequest<{id: number , src: number, dst: number}>(`edges`, connection, "POST")
-        console.log(result)
+        const newEdge = {
+          ...connection,
+          id: String(result.id),
+        };
+
+        setEdges((eds) => addEdge(newEdge as Edge, eds))
 
       } catch (err) {
         console.error("Failed to save node position:", err);
@@ -196,6 +290,7 @@ export default function App() {
     (event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
       event.preventDefault();
 
+      const container = (event.currentTarget as HTMLElement).getBoundingClientRect();
       
       const position = screenToFlowPosition({
         x: event.clientX,
@@ -203,15 +298,14 @@ export default function App() {
       });
 
       setMenu({
-        top: event.clientY,
-        left: event.clientX,
+        top: event.clientY - container.top,
+        left: event.clientX - container.left,
         x: position.x,
         y: position.y
       })      
     }
     ,[screenToFlowPosition]
   )
-
 
 
   const handleAddNode = async (x: number, y: number) => {
@@ -239,15 +333,15 @@ export default function App() {
     
     <div className="flex h-screen w-full overflow-hidden" >
       <aside
-    className={`
-      transition-all duration-300 ease-in-out border-r bg-white dark:bg-zinc-900 overflow-hidden
-      /* Desktop: Toggle between 64 and 0 */
-      ${isOpen ? 'w-64' : 'w-0 md:w-16'} 
-      /* Mobile: Fixed overlay */
-      fixed inset-y-0 left-0 z-50 md:relative md:translate-x-0
-      ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-    `}
-  >
+            className={`
+              transition-all duration-300 ease-in-out border-r bg-white dark:bg-zinc-900 overflow-hidden
+              /* Desktop: Toggle between 64 and 0 */
+              ${isOpen ? 'w-64' : 'w-0 md:w-16'} 
+              /* Mobile: Fixed overlay */
+              fixed inset-y-0 left-0 z-50 md:relative md:translate-x-0
+              ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}
+          >
         <div className="flex flex-col h-full p-4 overflow-hidden">
             <header className="flex h-14 items-center border-b bg-white px-4 dark:bg-zinc-900">
               <button 
@@ -265,10 +359,10 @@ export default function App() {
                 {isOpen ? '🏠 Home' : '🏠'}
               </button>
               <button className="w-full text-left p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                📁 Components
+                Projects
               </button>
               <button className="w-full text-left p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                ⚙️ Settings
+                Settings
               </button>
             </nav>
       </div>
@@ -280,15 +374,17 @@ export default function App() {
           nodes={nodes}
           nodeTypes={nodeTypes}
           onNodeDoubleClick={handleNodeDoubleClick}
-          onNodesDelete={handleNodeDelete}
-          onEdgesDelete={handleEdgeDelete}
+          onBeforeDelete={handleBeforeDelete}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+
+          
           onConnect={onConnect}
           onPaneContextMenu={onPaneContextMenu}
           onPaneClick={onPaneClick}
           onNodeContextMenu={onNodeContextMenu}
+          onNodeDrag={onNodeDrag}
           onNodeDragStop={onNodeDragStop}
           fitView
           fitViewOptions={fitViewOptions}
@@ -296,6 +392,7 @@ export default function App() {
           selectionOnDrag={true}
           selectionKeyCode={null}
           panOnDrag = {[1]}
+          
 
         > 
         <Background />
@@ -318,7 +415,7 @@ export default function App() {
             >
               <button 
                 onClick={() => handleAddNode(menu.x, menu.y)}
-                style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
+                style={{ color: 'white', background: 'none', border: 'none' }}
               >
                 + Add Component
               </button>

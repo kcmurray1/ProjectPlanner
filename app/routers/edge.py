@@ -18,7 +18,7 @@ async def read_edges(session: Session = Depends(get_session)):
 
 @router.post("/")
 async def create_edge(edge: Edge, session: Session = Depends(get_session)):
-    print(edge)
+    print('creating',edge)
     session.add(edge)
     session.commit()
     session.refresh(edge)
@@ -26,12 +26,15 @@ async def create_edge(edge: Edge, session: Session = Depends(get_session)):
 
 @router.delete("/bulk-delete")
 async def delete_edge(ids: List[int], session: Session = Depends(get_session)):
-    statement = delete(Edge).where(Edge.id.in_(ids))
+    if not ids:
+        return {"status": "skipped"}
     try:
+        statement = delete(Edge).where(Edge.id.in_(ids))
         results = session.exec(statement)
         session.commit()
     except Exception as e:
-        print(e)
+        session.rollback()
+        print('err', e)
     
     return {"status": "ok!"}
 

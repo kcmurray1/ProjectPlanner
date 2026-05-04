@@ -7,6 +7,8 @@ interface IComponent {
     x_pos: number
     height: number
     width: number
+    type: string
+    group_id: number
 }
 
 

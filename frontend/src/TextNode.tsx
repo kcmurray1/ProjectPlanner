@@ -1,12 +1,15 @@
-import { type NodeProps, Handle, Position, NodeResizer, type OnResizeEnd, type ResizeDragEvent, type ResizeParams, useReactFlow } from "@xyflow/react";
+import { type NodeProps, Handle, Position, NodeResizer, type OnResizeEnd, type ResizeDragEvent, type ResizeParams, useReactFlow, NodeToolbar } from "@xyflow/react";
 import React, { useCallback, useState, memo} from "react";
 import { CustomApiRequest } from "./FetchApI";
+import { observableFlowStore } from "./ObservableFlowStore";
+import { observer } from "mobx-react-lite";
 
-function TextNode({id, data, selected}: NodeProps) {
+export const TextNode = observer(({id, data, selected}: NodeProps) => {
 
-    const { setNodes } = useReactFlow();
+    // const { setNodes } = useReactFlow();
     const [value, setValue] = useState<string>(`${data.label}`);
     const isEditing = !!data.isEditing;
+
     const onChange = useCallback((evt : React.ChangeEvent<HTMLInputElement>) => {
         
         setValue(evt.target.value);
@@ -15,13 +18,8 @@ function TextNode({id, data, selected}: NodeProps) {
     const onBlur = useCallback( async () => {
         try {
             await CustomApiRequest<{name: string}>(`components/${id}`, {name: value}, "PATCH")
-            setNodes((nds) =>
-            nds.map((node) =>
-                node.id === id 
-                ? { ...node, data: { ...node.data, isEditing: false } } 
-                : node
-            )
-            );
+            observableFlowStore.setNodeToEdit(id, false);
+        
         } catch (err) {
         console.error("Failed to change node name:", err);
         }
@@ -41,12 +39,14 @@ function TextNode({id, data, selected}: NodeProps) {
                 type="target"
                 position={position}
                 id={`handle-${id}`}
+                className="textnode-handle"
                 />
                 <Handle
                 key={`${id}-in`}
                 type="source"
                 position={position}
                 id={`handle-in-${id}`}
+                className="textnode-handle"
                 />
             </>
         )
@@ -83,6 +83,14 @@ function TextNode({id, data, selected}: NodeProps) {
             minHeight={30} 
             onResizeEnd={onResizeEnd} 
             />
+            <NodeToolbar
+                isVisible={isEditing}
+                position={Position.Top}
+            >
+                <button onClick={()=> console.log("Ungroup...")}>Ungroup</button>
+
+
+            </NodeToolbar>
             <BiDirectionalHandle id={"left"} position={Position.Left} />
             <BiDirectionalHandle id={"right"} position={Position.Right} />
             <BiDirectionalHandle id={"top"} position={Position.Top} />
@@ -104,6 +112,6 @@ function TextNode({id, data, selected}: NodeProps) {
             
         </div>
     )
-}
+});
 
-export default memo(TextNode);
+// export default memo(TextNode);

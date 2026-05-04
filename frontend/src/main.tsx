@@ -4,11 +4,13 @@ import './index.css'
 import '@xyflow/react/dist/style.css';
 import { ReactFlowProvider } from '@xyflow/react';
 import App from './App.tsx'
+import { FlowApp } from './MobxApp.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ReactFlowProvider>
-    <App />
+    {/* <App /> */}
+    <FlowApp/>
     </ReactFlowProvider>
   </StrictMode>,
 )
