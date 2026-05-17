@@ -12,11 +12,12 @@ import {
     type OnBeforeDelete,
     type OnConnect,
     useReactFlow,
-    type NodeMouseHandler
+    type NodeMouseHandler,
+    type OnNodeDrag
 } from "@xyflow/react";
 import { observer } from "mobx-react-lite";
 import { TextNode } from "./TextNode";
-import CustomGroupComponent from "./CustomGroupComponent";
+import { CustomGroupComponent } from "./CustomGroupComponent";
 import { PaneOptionsMenu } from "./PaneOptionsMenu";
 
 const fitViewOptions: FitViewOptions = {
@@ -33,7 +34,7 @@ const nodeTypes = {textNode: TextNode, groupComponent: CustomGroupComponent}
 
 export const FlowApp = observer(() => {
 
-    // const { getIntersectingNodes } = useReactFlow();
+    const { getIntersectingNodes } = useReactFlow();
     const { screenToFlowPosition } = useReactFlow();
 
     const handleNodeDoubleClick = (_:React.MouseEvent, node: Node) => {
@@ -83,41 +84,75 @@ export const FlowApp = observer(() => {
   )
 
   const onNodeContextMenu: NodeMouseHandler<Node> = useCallback(
-    async (event, node) => {
-        event.preventDefault();
+        async (event, node) => {
+            event.preventDefault();
+            observableFlowStore.setNodeToEdit(node.id, true);
 
-        observableFlowStore.setNodeToEdit(node.id, true);
 
+        }, []);
 
-    }, []);
+    const onNodeDrag: OnNodeDrag<Node> = useCallback(
+        (_, node) => {
+            const intersections = getIntersectingNodes(node).filter((nd) => {
+                return nd.parentId !== node.id && node.parentId !== nd.id
+            })
+            const intersectionsIds = intersections.map((n) => n.id);
+           
+            observableFlowStore.setNodeToGroup(node, intersectionsIds);
+        }, [getIntersectingNodes]);
 
     
+    const onNodeDragStop: OnNodeDrag<Node> = useCallback(
+        async (_, node) => {
+    
+            const intersections = getIntersectingNodes(node).filter((nd) => {
+                return (
+                    !nd.parentId && 
+                    nd.parentId !== node.id && 
+                    node.parentId !== nd.id
+                );
+            });
+
+            observableFlowStore.groupNodes(node, intersections);
+
+           
+        },
+        [getIntersectingNodes]);
+
+    const defaultEdgeOptions = {
+    type: 'simplebezier', // Faster than the standard 'default' bezier
+    style: { strokeWidth: 2 },
+    };
     
 
     return (
         <div className="flex h-screen w-full overflow-hidden" >
             <div className="relative flex-grow h-full">
                 <ReactFlow
-                nodes={observableFlowStore.nodes.slice()}
+                nodes={observableFlowStore.nodes}
                 nodeTypes={nodeTypes}
                
-                edges={observableFlowStore.edges.slice()}
+                edges={observableFlowStore.edges}
+                onEdgesChange={observableFlowStore.onEdgesChange}
                 onNodesChange={observableFlowStore.onNodesChange}
                 onNodeDoubleClick={handleNodeDoubleClick}
                 onBeforeDelete={onBeforeDelete}
-                onConnect={onConnect}
+                onConnect={observableFlowStore.onConnect}
 
                 onPaneContextMenu={onPaneContextMenu}
                 onPaneClick={onPaneClick}
                 onNodeContextMenu={onNodeContextMenu}
-                // onNodeDrag={onNodeDrag}
-                // onNodeDragStop={onNodeDragStop}
+                onNodeDrag={onNodeDrag}
+                onNodeDragStop={onNodeDragStop}
                 fitView
                 fitViewOptions={fitViewOptions}
                 defaultEdgeOptions={defaultEdgeOptions}
                 selectionOnDrag={true}
                 selectionKeyCode={null}
                 panOnDrag = {[1]}
+                colorMode='dark'
+
+                edgesFocusable={false}
                 
 
                 > 

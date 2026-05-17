@@ -21,7 +21,7 @@ import {
 } from '@xyflow/react';
 
 import { TextNode } from './TextNode';
-import CustomGroupComponent from './CustomGroupComponent';
+import { CustomGroupComponent } from './CustomGroupComponent';
 import { CustomApiRequest, type GetComponents, type GetComponent} from './FetchApI';
 
  

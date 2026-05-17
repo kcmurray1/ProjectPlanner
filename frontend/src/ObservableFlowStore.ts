@@ -1,12 +1,15 @@
 import { 
     addEdge,
+    applyEdgeChanges,
     applyNodeChanges,
+    type Connection,
     type Edge, 
     type Node, 
     type OnConnect, 
+    type OnEdgesChange, 
     type OnNodesChange 
 } from "@xyflow/react";
-import { action, autorun, makeObservable, observable, reaction, runInAction, toJS } from "mobx";
+import { action, autorun, computed, makeAutoObservable, makeObservable, observable, reaction, runInAction, toJS } from "mobx";
 import { CustomApiRequest, type GetComponent, type GetComponents } from "./FetchApI";
 
 
@@ -65,21 +68,25 @@ class ObservableFlowStore {
     menu = new ObservablePaneMenu(this);
 
     constructor() {
-        makeObservable(this, {
-            nodes: observable,
-            edges: observable,
-            pane: observable,
-            onNodesChange: action.bound,
-            setPane: action.bound,
-            onConnect: action.bound,
-            deleteNode: action.bound,
-            addNode: action.bound,
-            setNodeToEdit: action.bound
+        makeAutoObservable(this, {
+            nodes: observable.shallow,
+            edges: observable.shallow,
+            // pane: observable,
+            // onNodesChange: action.bound,
+            // onEdgesChange: action.bound,
+            // setPane: action.bound,
+            // onConnect: action.bound,
+            // deleteNode: action.bound,
+            // addNode: action.bound,
+            // setNodeToEdit: action.bound,
+            // setNodeToGroup: action.bound,
+            // groupNodes: action.bound,
+            // plainEdges: computed
         })
 
-        autorun(() => {
-            console.log(`Current Pane: ${this.pane} | Nodes:`, toJS(this.nodes));
-        });
+        // autorun(() => {
+        //     console.log(`Current Pane: ${this.pane} | Nodes:`, toJS(this.nodes));
+        // });
 
         reaction(
             () => this.pane,
@@ -145,11 +152,26 @@ class ObservableFlowStore {
 
 
     onNodesChange: OnNodesChange = (changes) => {
-        this.nodes = applyNodeChanges(changes, this.nodes);
+        // console.log(changes);
+        runInAction(() => {
+            this.nodes = [...applyNodeChanges(changes, this.nodes)];
+        })
+        
     };
 
-    onConnect: OnConnect = async (connection) => {
+    onEdgesChange: OnEdgesChange = (changes) => {
+         runInAction(() => {
+            this.edges = [...applyEdgeChanges(changes, this.edges)];
+        })
+       
+    }
+    
+    get plainEdges() {
+        return toJS(this.edges);
+    }
+    async onConnect(connection: Connection){
          try {
+            console.log(connection);
             const result = await CustomApiRequest<{id: number , src: number, dst: number}>(`edges`, connection, "POST")
             const newEdge = {
                 ...connection,
@@ -157,11 +179,12 @@ class ObservableFlowStore {
             };
 
             runInAction(() => {
-                 this.edges = addEdge(newEdge as Edge, this.edges)
+                this.edges = [...this.edges, newEdge];
             })
-    
+            
         } catch (err) {
         console.error("Failed to save connection:", err);
+       
         }
     }
    
@@ -195,7 +218,9 @@ class ObservableFlowStore {
                 width: result.width,
                 height: result.height
             }
-            runInAction(()=>{this.nodes.push(newNode);});
+            runInAction(() => {
+                this.nodes = [...this.nodes, newNode];
+            });
             return true
         } catch (err) {
             console.log("unable to add node", err)
@@ -206,10 +231,99 @@ class ObservableFlowStore {
     setNodeToEdit(id: string, isEditing: boolean){
         const node = this.nodes.find((n)=> n.id === id);
         if(node) {
-            node.data = {
-                ...node.data,
-                isEditing: isEditing
+            node.data.isEditing = isEditing;
+            node.selected = isEditing;
+        }
+    }
+
+    setNodeToGroup(draggedNode: Node, intersectionsIds: string[]){
+        this.nodes.forEach((node)=> {
+
+            if(node.id == draggedNode.id) {return}
+
+            const isHightlighted = intersectionsIds.includes(node.id);
+
+            if (isHightlighted){
+                node.data.className =  'ring-4 ring-blue-500 shadow-lg'
             }
+            else {
+                node.data.className = "";
+            }
+          
+        })
+
+    }
+
+    groupNodes = async (draggedNode: Node, intersections: Node[]) => {
+        try {
+
+         const payload = {
+            x_pos : draggedNode.position.x,
+            y_pos: draggedNode.position.y
+        };
+        const result = await CustomApiRequest<{x: number, y: number}>(`components/${draggedNode.id}`, payload, "PATCH")
+        
+        
+        
+    
+        
+        if (intersections.length > 0) {
+            
+            let targetNode = intersections[0]
+            let newGroupNode = null
+
+            if (targetNode.type === groupName)
+            {
+            console.log("adding to group")
+            const res = await CustomApiRequest<GetComponent>(`components/${draggedNode.id}`, {"group_id": targetNode.id}, "PATCH")
+            }
+            else{
+            console.log('creating group..')
+            const payload = {"nodes": [draggedNode.id, targetNode.id]}
+            const result = await CustomApiRequest<GetComponent>(`components/groups`, payload, "POST")
+            
+            console.log('created', result)
+            newGroupNode = {
+                id: String(result.id),
+                type:  result.type,
+                data: {label: 'gorup'},
+                style: { width: result.width, height: result.height },
+                position: {x: result.x_pos, y: result.y_pos}
+            }
+            }
+            
+            
+            // dragged node adds component as group parent
+
+            // runInAction(() => {
+            //     const baseNodes = newGroupNode ? [newGroupNode,...this.nodes] : this.nodes
+            //     const newParentNode = newGroupNode ? newGroupNode : targetNode
+
+            //     return baseNodes.map((nd) => {
+            //         if (nd.id === draggedNode.id || (newGroupNode && nd.id == targetNode.id))
+            //         {
+            //         console.log(nd.type, nd.id)
+            //         return {
+            //             ...nd,
+            //             extent: 'parent',
+            //             parentId: newParentNode.id,
+            //             position : {
+            //             x: nd.position.x - newParentNode.position.x,
+            //             y: nd.position.y - newParentNode.position.y
+            //             }
+            //         }
+            //         }
+            //         return nd
+            //     });
+
+                
+                
+            //     })
+        }
+        
+
+        } catch (err) {
+        console.error("Failed to save node position:", err);
         }
     }
 

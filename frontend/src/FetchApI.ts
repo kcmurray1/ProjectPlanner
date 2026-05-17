@@ -9,7 +9,23 @@ interface IComponent {
     width: number
     type: string
     group_id: number
+    parent_id: string
 }
+
+// {
+//     parentId?: string | undefined;
+//     extent?: "parent" | null | undefined;
+//     id: string;
+//     data: {
+//         label: string;
+//     };
+//     position: {
+//         x: number;
+//         y: number;
+//     };
+//     type: string;
+//     width: number;
+//     height: number;
 
 
 export type GetComponents = IComponent[] 
