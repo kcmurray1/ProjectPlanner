@@ -30,9 +30,9 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
     
     const [value, setValue] = useState<string>(`${data.label}`);
     const [isRenaming, setIsRenaming] = useState<boolean>(false);
-    const storeNode = observableFlowStore.nodesMap.get(id);
-    const isEditing = storeNode?.isEditing ? storeNode.isEditing : false;
-    
+
+
+   
     const onChange = useCallback((evt : React.ChangeEvent<HTMLInputElement>) => {
         
         setValue(evt.target.value);
@@ -40,7 +40,9 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
 
     const onBlur = useCallback( async () => {
         try {
-            observableFlowStore.setNodeToEdit(id, false);
+            setIsRenaming(false);
+            observableFlowStore.updateLabel(id, value);
+            console.log(value);
             await CustomApiRequest<{name: string}>(`components/${id}`, {name: value}, "PATCH")
             
            
@@ -71,12 +73,9 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
 
     const handleDoubleClick = (e: React.MouseEvent<HTMLInputElement>) => {
         e.stopPropagation()
+        // e.currentTarget.select();
         setIsRenaming(true);
-        // if (isEditing)
-        // {
-        //     e.currentTarget.select();
-
-        // }
+   
     }
 
     
@@ -85,31 +84,26 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
     return (
         <div 
             onBlur={onBlur} 
-            className={`text-updater-node ${data.className || ''} ${isEditing ? "nodrag nopan" : ""}`}
+            className={`text-updater-node ${data.className || ''} ${isRenaming ? "nodrag nopan" : ""}`}
             style={{
                 display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
                 width: '100%',
-                overflow: 'hidden', // Keeps custom borders clean on container edges
+                overflow: 'hidden', 
                 boxSizing: 'border-box'
             }}
         >
-            {/* Resizer overlay tracking framework */}
             <NodeResizer
                 color="#ff0071"
                 isVisible={selected}
                 minWidth={150}
-                minHeight={100} // Increased min-height so header + empty body fits cleanly
+                minHeight={150} // Increased min-height so header + empty body fits cleanly
                 onResizeEnd={onResizeEnd} 
             />
 
-            <NodeToolbar isVisible={isEditing} position={Position.Top}>
-                <button className="xy-theme__button" onClick={() => observableFlowStore.setNodeToEdit(id, false)}>
-                    {isEditing ? "UnEdit" : "Edit"}
-                </button>
-                <button className="xy-theme__button">Delete</button>
-                <button className="xy-theme__button">IDK</button>
+            <NodeToolbar isVisible={selected} position={Position.Top}>
+                <button className="xy-theme__button">X</button>
             </NodeToolbar>
 
             <BiDirectionalHandle id="left" position={Position.Left} />
@@ -123,8 +117,12 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
                 onDoubleClick={handleDoubleClick}
                 style={{
                     width: '100%',
-                    height: '5%',
-                    padding: '4px 4px',
+                    height: '30px',
+                    flexShrink: 0,
+                    flexGrow: 0,
+                    display: 'flex',
+                    padding: '0 10px',
+                    justifyContent: 'flex-start',
                     borderBottom: '1px solid #e2e8f0', // Clean separation line
                     backgroundColor: '#8db0cf',       // Slightly shaded header canvas background
                     boxSizing: 'border-box'
@@ -138,6 +136,21 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
                     value={value} 
                     disabled={!isRenaming} 
                     className={isRenaming ? "nodrag nopan" : ""}
+                    style={{
+                        width: '100%',
+                        background: 'transparent',
+                        outline: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                        color: '#1e293b',
+                        textAlign: 'left', // FIX 3: Explicitly force text left-aligned
+                        padding: isRenaming ? '2px 6px' : '0px',
+                        borderRadius: '4px',
+                        // Clean handling for text strings that are wider than the user's resized node box
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden'
+                    }}
                    
                 />
             </div>
@@ -166,5 +179,3 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
     );
     
 });
-
-// export default memo(TextNode);

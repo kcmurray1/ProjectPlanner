@@ -1,5 +1,5 @@
 
-import { makeAutoObservable, reaction, runInAction } from "mobx";
+import { makeAutoObservable, reaction, runInAction, toJS } from "mobx";
 import { CustomApiRequest, type GetComponent, type GetComponents } from "./FetchApI";
 import type { Node, Edge} from "@xyflow/react";
 
@@ -33,10 +33,18 @@ export class ObservableNodeModel {
     // }
 }
 
+interface Pane {
+    id: string;
+    label: string;
+}
+
 class ObservableFlowStore {
     nodesMap = new Map<string, ObservableNodeModel>();
-    pane: number = 0;
     isLoading = false;
+
+    currentPane = 0;
+    paneHistory: Pane[] = [{id:"0", label: "home"}]
+
 
     constructor() {
         makeAutoObservable(this)        
@@ -60,6 +68,19 @@ class ObservableFlowStore {
         })
     }
 
+    addNode(node: Node){
+        runInAction(()=>{
+            const { label } = node.data as {label: string};
+            const nodeModel = new ObservableNodeModel(
+                node.id,
+                label,
+                node.type ? node.type : "textNode",
+                node.parentId ? node.parentId : null
+            );
+            this.nodesMap.set(node.id, nodeModel);
+        })
+    }
+
     setNodeToEdit(id: string, isEditing: boolean){
         const node = this.nodesMap.get(id);
         if(node) {
@@ -68,6 +89,37 @@ class ObservableFlowStore {
             node.isSelected = isEditing;
         }
     }
+
+    addPaneHistory(id: string){
+        const rootNode = this.nodesMap.get(id);
+
+        runInAction(() =>{
+            this.currentPane = Number(id);
+        })
+        this.paneHistory.push({id: id, label: rootNode? rootNode.label : "TDB"});
+    }
+
+    jumpToPane(paneID: number){
+        if(paneID === observableFlowStore.currentPane)return;
+
+        const target = this.paneHistory.findIndex((pane)=>Number(pane.id) === paneID);
+        if(target < 0) return;
+        this.currentPane = paneID
+        this.paneHistory = this.paneHistory.slice(0, target + 1);
+    }
+
+    updateLabel(id: string, newLabel: string){
+        const node = this.nodesMap.get(id);
+
+        if (node){
+            runInAction(() => {
+           node.label = newLabel
+        });
+        }
+    }
+
+
+
 
 
 }
