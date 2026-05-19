@@ -19,7 +19,7 @@ export const PaneBreadcrumbs = observer(() => {
     const history = observableFlowStore.paneHistory;
 
     return (
-        <nav style={navStyle}>
+        <nav className="pane-breadcrumbs">
             {history.map((step, index)=> {
 
                 const isLast = index == history.length - 1;
@@ -32,13 +32,3 @@ export const PaneBreadcrumbs = observer(() => {
         </nav>
     )
 });
-
-const navStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '8px 16px',
-    background: '#000000',
-    borderRadius: '8px',
-    fontFamily: 'sans-serif',
-    fontSize: '14px',
-};

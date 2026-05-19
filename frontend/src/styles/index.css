@@ -1,5 +1,8 @@
-@import url('./xy-theme.css');
 @import "tailwindcss";
+@import "./node-toolbar.css";
+@import "./pane-breadcrumbs.css";
+@import "./pane-menu.css";
+@import "./default-node.css";
 
 :root {
   --text: #6b6375;
@@ -36,12 +39,12 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
-    --text-h: #f3f4f6;
+    --text-h: #f5f5f5;
     --bg: #16171d;
     --border: #2e303a;
     --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent: #543a70;
+    --accent-bg: rgba(200, 199, 202, 0.15);
     --accent-border: rgba(192, 132, 252, 0.5);
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
@@ -99,7 +102,7 @@ p {
 }
 
 
-.text-updater-node {
+/* .text-updater-node {
   height: 100%;
   width: 100%;
   display: flex;
@@ -125,7 +128,7 @@ p {
   text-align: center;
   outline: none;
   padding: 25px;
-}
+} */
 
 .text-updater-node input:disabled {
   pointer-events: none;

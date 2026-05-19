@@ -101,79 +101,31 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
                 minHeight={150} // Increased min-height so header + empty body fits cleanly
                 onResizeEnd={onResizeEnd} 
             />
-
-            <NodeToolbar isVisible={selected} position={Position.Top}>
-                <button className="xy-theme__button">X</button>
-            </NodeToolbar>
-
             <BiDirectionalHandle id="left" position={Position.Left} />
             <BiDirectionalHandle id="right" position={Position.Right} />
             <BiDirectionalHandle id="top" position={Position.Top} />
             <BiDirectionalHandle id="bottom" position={Position.Bottom} />
 
-            {/* --- HEADER BLOCK (Component Title Input) --- */}
-            <div 
-                className="node-header"
-                onDoubleClick={handleDoubleClick}
-                style={{
-                    width: '100%',
-                    height: '30px',
-                    flexShrink: 0,
-                    flexGrow: 0,
-                    display: 'flex',
-                    padding: '0 10px',
-                    justifyContent: 'flex-start',
-                    borderBottom: '1px solid #e2e8f0', // Clean separation line
-                    backgroundColor: '#8db0cf',       // Slightly shaded header canvas background
-                    boxSizing: 'border-box'
-                }}
-            >     
-                <input 
+            <div className="default-node-header" onDoubleClick={handleDoubleClick}>
+
+                <input   
                     id="text" 
                     name="text" 
                     onChange={onChange} 
                     onKeyDown={handleKeyDown} 
                     value={value} 
-                    disabled={!isRenaming} 
-                    className={isRenaming ? "nodrag nopan" : ""}
-                    style={{
-                        width: '100%',
-                        background: 'transparent',
-                        outline: 'none',
-                        fontWeight: 'bold',
-                        fontSize: '14px',
-                        color: '#1e293b',
-                        textAlign: 'left', // FIX 3: Explicitly force text left-aligned
-                        padding: isRenaming ? '2px 6px' : '0px',
-                        borderRadius: '4px',
-                        // Clean handling for text strings that are wider than the user's resized node box
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden'
-                    }}
-                   
+                    disabled={!isRenaming}
+                    className={`${isRenaming ? "nodrag nopan is-renaming" : ""}`}
                 />
             </div>
 
-            {/* --- BODY BLOCK (Future Tasks / Checklists / Data) --- */}
-            <div 
-                className="node-body"
-                style={{
-                    flexGrow: 1,          // Forces body wrapper element to expand into remaining space
-                    width: '100%',
-                    padding: '12px',
-                    boxSizing: 'border-box',
-                    backgroundColor: '#ffffff',
-                    overflowY: 'auto',    // Adds vertical scrollbars automatically if contents overflow
-                    fontSize: '13px',
-                    color: '#64748b'
-                }}
-            >
-                {/* Future checklist collections, text area markdown content, or status bars drop right here */}
-                <div className="placeholder-content" style={{ fontStyle: 'italic', opacity: 0.6 }}>
+            <div className="default-node-body">
+                <div>
                     No tasks added yet. Right-click to configure details.
                 </div>
             </div>
+
+
 
         </div>
     );

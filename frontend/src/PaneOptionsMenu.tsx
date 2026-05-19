@@ -6,7 +6,7 @@ export const PaneOptionsMenu = observer(() => {
     const {menu} = observableFlowStore;
 
     if(!menu.isOpen) return;
-
+    console.log(menu.top, menu.left)
     return (
         <div
               style={{

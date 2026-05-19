@@ -1,0 +1,15 @@
+.pane-menu {
+    position: absolute;
+    z-index: 1000;
+    background-color: #222;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.pane-menu-btn {
+    text-align: left;
+    color: var(--text-h);
+}

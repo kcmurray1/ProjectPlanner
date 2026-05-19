@@ -1,0 +1,47 @@
+.node-toolbar-wrapper {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background-color: var(--accent-bg);/*#1e293b; Sleek dark slate layout */
+  color: var(--text-h);
+  padding: 12px 24px;
+  border-radius: 30px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.node-toolbar-btn-default {
+  background: #3b82f6;
+  border: none;
+  color: var(--text-h);
+  padding: 6px 14px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.node-toolbar-btn-default:hover {
+  background: #2563eb; 
+}
+
+.node-toolbar-btn-delete {
+  background: #ef4444;
+  border: none;
+  color: var(--text-h);
+  padding: 6px 14px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.node-toolbar-btn-delete:hover {
+  background: #dc2626;
+}

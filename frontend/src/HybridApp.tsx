@@ -18,6 +18,7 @@ import {
   type DefaultEdgeOptions,
   type NodeMouseHandler,
   type OnBeforeDelete,
+  type OnSelectionChangeParams,
 } from '@xyflow/react';
 
 import { TextNode } from './TextNode';
@@ -28,6 +29,8 @@ import { observableFlowStore } from './MyStore';
 import { ContextMenu } from './NodeMenu';
 import { PaneBreadcrumbs } from './PaneBreadcrumb';
 import { useCanvasShortcuts } from './shortcuts';
+import { SelectionToolbar } from './NodeToolBar';
+import { PaneMenu } from './PaneMenu';
 
 const nodeTypes = {textNode: TextNode, groupComponent: CustomGroupComponent}
 
@@ -320,12 +323,25 @@ export const ProjectCanvas = observer(() => {
         },
         [setNodes, getIntersectingNodes]);
 
+    const [showToolbar, setShowToolbar] = useState<boolean>(false);
+    const [selectedObj, setSelectedIds] = useState<{nodes: Node[], edges: Edge[]}>({nodes:[],edges:[]});
+
+    const handleSelectionChange = useCallback((params: OnSelectionChangeParams) => {
+        setSelectedIds(params);
+        setShowToolbar(params.nodes.length > 0);
+    }, []);
+
     return (
         
         <div className="flex h-screen w-full overflow-hidden" >
             
         <div id="rf-viewport-wrapper" className="relative flex-grow h-full" onClick={onPaneClick}>
             <PaneBreadcrumbs/>
+            <SelectionToolbar 
+                isVisible={showToolbar} 
+                selectedObjects={selectedObj} 
+                onClose={() => setShowToolbar(false)}
+            />
             <ReactFlow
             nodes={nodes}
             nodeTypes={nodeTypes}
@@ -338,6 +354,7 @@ export const ProjectCanvas = observer(() => {
             onPaneContextMenu={onPaneContextMenu}
             onNodeContextMenu={onNodeContextMenu}
             // onNodeDrag={onNodeDrag}
+            onSelectionChange={handleSelectionChange}
             onNodeDragStop={onNodeDragStop}
             fitView
             fitViewOptions={fitViewOptions}
@@ -362,35 +379,7 @@ export const ProjectCanvas = observer(() => {
                 closeMenu={() => setNodeMenu(null)} 
                 />
             )}
-             {menu && (  
-            <div
-              style={{
-                position: 'absolute',
-                top: menu.top,
-                left: menu.left,
-                zIndex: 1000,
-                backgroundColor: '#222',
-                border: '1px solid #555',
-                borderRadius: '4px',
-                padding: '5px',
-                display: 'flex',
-                flexDirection: 'column',
-                textAlign: 'left'
-              }}
-            >
-              <button 
-                onClick={() => handleAddNode(menu.x, menu.y)}
-                style={{ color: 'white', background: 'none', border: 'none' }}
-              >
-                + Add Component
-              </button>
-               <button 
-                onClick={() => handleAddNode(menu.x, menu.y)}
-                style={{ color: 'white', background: 'none', border: 'none' }}
-              >
-                + Add Group
-              </button>
-            </div> 
+             {menu && ( <PaneMenu menu={menu} onAddNode={handleAddNode} onAddGroup={()=>{}}/> 
           )}
         
         </div>
@@ -398,4 +387,8 @@ export const ProjectCanvas = observer(() => {
         
     );
 })
+
+
+
+
 
