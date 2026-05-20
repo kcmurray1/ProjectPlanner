@@ -8,9 +8,10 @@ interface SelectionToolbarProps {
     isVisible: boolean;
     selectedObjects: {nodes: Node[], edges: Edge[]};
     onClose: () => void;
+    onGroup: () => void;
 }
 
-export const SelectionToolbar = ({ isVisible, selectedObjects, onClose }: SelectionToolbarProps) => {
+export const SelectionToolbar = ({ isVisible, selectedObjects, onClose, onGroup }: SelectionToolbarProps) => {
     const { deleteElements, getNodes, setEdges } = useReactFlow();
 
     if (!isVisible) return null;
@@ -30,9 +31,7 @@ export const SelectionToolbar = ({ isVisible, selectedObjects, onClose }: Select
     const handleGroupSelected = async () => {
         console.log("Wrapping nodes into a sub-hierarchy:", nodes);
         
-        // Example: Trigger a MobX action or FastAPI call to assign these nodes a parent_id
-        // await observableFlowStore.clusterNodesIntoGroup(nodeIds);
-        
+        onGroup();
         onClose();
     };
 

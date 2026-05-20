@@ -13,14 +13,14 @@ const BiDirectionalHandle = ({id, position}: {id: string, position: Position} ) 
             type="target"
             position={position}
             id={`handle-${id}`}
-            className="textnode-handle"
+            className="default-node-handle"
             />
             <Handle
             key={`${id}-in`}
             type="source"
             position={position}
             id={`handle-in-${id}`}
-            className="textnode-handle"
+            className="default-node-handle"
             />
         </>
     )
@@ -29,6 +29,7 @@ const BiDirectionalHandle = ({id, position}: {id: string, position: Position} ) 
 export const TextNode = observer(({id, data, selected}: NodeProps) => {
     
     const [value, setValue] = useState<string>(`${data.label}`);
+    const [descValue, setDescValue] = useState<string>("Description..");
     const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
 
@@ -73,7 +74,6 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
 
     const handleDoubleClick = (e: React.MouseEvent<HTMLInputElement>) => {
         e.stopPropagation()
-        // e.currentTarget.select();
         setIsRenaming(true);
    
     }
@@ -120,9 +120,15 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
             </div>
 
             <div className="default-node-body">
-                <div>
-                    No tasks added yet. Right-click to configure details.
-                </div>
+                <textarea className={`${selected ? "nodrag nopan is-renaming" : ""}`}
+                    onChange={(e) => {
+                        e.target.style.height = 'auto'; 
+                        setDescValue(e.target.value);                        
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                    value={descValue}
+                >
+                </textarea>
             </div>
 
 

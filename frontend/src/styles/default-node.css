@@ -10,9 +10,12 @@
     color: #64748b;
 }
 
-.default-node-body div {
+.default-node-body textarea {
    font-style: italic;
    opacity: 0.6;
+   width: inherit;
+   resize: none;
+   overflow: hidden;
 }
 
 
@@ -22,7 +25,6 @@
     width: 100%;
     height: 30px;
     flex: 0 0 30px;;
-    /* display: flex; */
     align-items: center;
     padding: 0 10px;
     justify-content: flex-start;
@@ -33,21 +35,37 @@
 
 .default-node-header input {
     width: 100%;
-    height: 100%;              /* Allow it to safely fill the vertical center track space */
-    background: transparent;   /* Strips native browser field whitespaces */
-    border: none;              /* Wipes hidden desktop platform bevel edges */
+    height: 100%;             
+    background: transparent;   
+    border: none;            
     outline: none;
     font-weight: bold;
     font-size: 14px;
     color: #080808;
     text-align: left;
     border-radius: 4px;
-    margin: 0;                 /* Clear default user-agent stylesheet margin blocks */
+    margin: 0;                
 
-    /* Clean truncation text configuration handling from your working spec */
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
     box-sizing: border-box;
    
+}
+
+.default-node-header input:disabled {
+  pointer-events: none;
+  cursor: grab;
+}
+
+.react-flow__handle.default-node-handle {
+  width: 20px;
+  height: 20px;
+  background-color: rgb(70, 84, 90);
+  border-radius: 4px;
+}
+
+.react-flow__node-group {
+    background-color: rgba(207, 182, 255, 0.4);
+    border-color: #9E86ED;
 }

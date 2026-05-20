@@ -101,11 +101,11 @@ async def create_component_group(data: dict, session: Session = Depends(get_sess
     new_group = Component(
         name="New Group",
         type="groupComponent",
-        x_pos=base_node.x_pos,
-        y_pos=base_node.y_pos,
-        width=base_node.width * 2,   
-        height=base_node.height * 2,
-        parent_id=base_node.parent_id 
+        x_pos=data.get("x_pos"),
+        y_pos=data.get("y_pos"),
+        width=data.get("width"),   
+        height=data.get("height"),
+        parent_id=base_node.parent_id # ensure this exists in same pane as other nodes
     )
 
     session.add(new_group)

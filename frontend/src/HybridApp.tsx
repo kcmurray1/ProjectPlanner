@@ -54,8 +54,7 @@ export const ProjectCanvas = observer(() => {
     const [edges, setEdges] = useState<Edge[]>([]);
     const [nodeMenu, setNodeMenu] = useState<{x: number; y: number; top: number; left: number, nodeID: string} | null>(null);
     const [menu, setMenu] = useState<{x: number; y: number; top: number; left: number} | null>(null);
-    useCanvasShortcuts();
-    // const [pane, setPane] = useState<number>(0);
+ 
 
     const currentPane = observableFlowStore.currentPane;
 
@@ -64,8 +63,6 @@ export const ProjectCanvas = observer(() => {
             const res = await CustomApiRequest<{nodes: GetComponents, edges: Edge[]}>(`components/diagram?parent_id=${paneID}`, null, "GET")
 
             const {nodes, edges} = res    
-            
-
             //Ensure groups nodes are created first, nested groups are unsupported
             const sortedData = [...nodes].sort((a, b) => {
                 if (a.type === groupName && b.type !== groupName) return -1;
@@ -121,7 +118,7 @@ export const ProjectCanvas = observer(() => {
     const onNodeContextMenu = useCallback( (event: MouseEvent | React.MouseEvent<Element, MouseEvent>, node: any) => {
     // Prevent the default browser context menu from popping up
     event.preventDefault();
-    console.log('right cliked', node.id)
+    console.log('right cliked', node.id, node.position);
     // observableFlowStore.setNodeToEdit(node.id, true);
         const canvasViewport = document.getElementById('rf-viewport-wrapper');
         if (!canvasViewport) return;
@@ -249,74 +246,50 @@ export const ProjectCanvas = observer(() => {
             y_pos: node.position.y
           };
           try {
-            const result = await CustomApiRequest<{x: number, y: number}>(`components/${node.id}`, payload, "PATCH")
-           
-            
-            const intersections = getIntersectingNodes(node).filter((nd) => {
-              return (
-                  !nd.parentId && 
-                  nd.parentId !== node.id && 
-                  node.parentId !== nd.id
-                );
+            await CustomApiRequest<{x: number, y: number}>(`components/${node.id}`, payload, "PATCH")
+            // check for intersections with a group
+            const intersections = getIntersectingNodes(node).filter((nd)=>{
+                return (nd.type == 'groupComponent')
             });
 
-           
-      
+       
+
+            if (intersections.length > 0)
+            {
+                // check if intersecting same group
+                // how to handle multiple groups?
+
+                console.log(intersections);
+
+            }
+            else{
+                // check if node was in a group but was dragged outside
+                
+               
+                if (node.parentId)
+                {
+                    setNodes((nds)=>{
+
+                        const oldParent = nds.find((nd)=>nd.id === node.parentId);
+                        return nds.map((nd)=>{
+                            
+                            if (nd.id === node.id && oldParent){
+                                return {
+                                    ...node,
+                                    parentId: undefined,
+                                    position: {
+                                        x: node.position.x + oldParent.position.x,
+                                        y: node.position.y + oldParent.position.y
+                                    }
+                                }
+                            }
+                            return nd;
+                        })
+                    })
+                }
+            }
             
-            // if (intersections.length > 0) {
-             
-            //   let targetNode = intersections[0]
-            //   let newGroupNode = null
-    
-            //   if (targetNode.type === groupName)
-            //   {
-            //     console.log("adding to group")
-            //     const res = await CustomApiRequest<GetComponent>(`components/${node.id}`, {"group_id": targetNode.id}, "PATCH")
-            //   }
-            //   else{
-            //     console.log('creating group..')
-            //     const payload = {"nodes": [node.id, targetNode.id]}
-            //     const result = await CustomApiRequest<GetComponent>(`components/groups`, payload, "POST")
-              
-            //     console.log('created', result)
-            //     newGroupNode = {
-            //       id: String(result.id),
-            //       type:  result.type,
-            //       data: {label: 'gorup'},
-            //       style: { width: result.width, height: result.height },
-            //       position: {x: result.x_pos, y: result.y_pos}
-            //     }
-            //   }
-             
-             
-            //   // dragged node adds component as group parent
-            //   setNodes((nds) => {
-            //     const baseNodes = newGroupNode ? [newGroupNode,...nds] : nds
-            //     const newParentNode = newGroupNode ? newGroupNode : targetNode
-    
-            //     return baseNodes.map((nd) => {
-            //       if (nd.id === node.id || (newGroupNode && nd.id == targetNode.id))
-            //       {
-            //         console.log(nd.type, nd.id)
-            //         return {
-            //           ...nd,
-            //           extent: 'parent',
-            //           parentId: newParentNode.id,
-            //           position : {
-            //             x: nd.position.x - newParentNode.position.x,
-            //             y: nd.position.y - newParentNode.position.y
-            //           }
-            //         }
-            //       }
-            //       return nd
-            //     });
-    
-              
-              
-            //   })
-            // }
-          
-    
+
           } catch (err) {
             console.error("Failed to save node position:", err);
           }
@@ -331,6 +304,66 @@ export const ProjectCanvas = observer(() => {
         setShowToolbar(params.nodes.length > 0);
     }, []);
 
+    const foo = async () => {
+            if (selectedObj.nodes.length < 1) return;
+            let minX = Infinity;
+            let minY = Infinity;
+            let maxX = -Infinity;
+            let maxY = -Infinity;
+
+            selectedObj.nodes.forEach((nd) => {
+                if (nd.position.x < minX) minX = nd.position.x;
+                if (nd.position.y < minY) minY = nd.position.y;
+                
+                // Fallback sizes if ReactFlow hasn't fully measured dimensions yet
+                const w = nd.measured?.width || nd.width || 150;
+                const h = nd.measured?.height || nd.height || 50;
+                
+                if (nd.position.x + w > maxX) maxX = nd.position.x + w;
+                if (nd.position.y + h > maxY) maxY = nd.position.y + h;
+            });
+
+            // 2. APPLY VIEWPORT PADDING
+            const padding = 10; // Pixels of spacing around the outermost selectedObj.nodes
+            const calculatedX = minX - padding;
+            const calculatedY = minY - padding;
+            const calculatedWidth = (maxX - minX) + (padding * 2);
+            const calculatedHeight = (maxY - minY) + (padding * 2);
+
+            const selectedNodeIds = selectedObj.nodes.map((n) => n.id);
+
+            const payload = {"nodes": selectedNodeIds, x_pos: calculatedX, y_pos: calculatedY, width: calculatedWidth, height: calculatedHeight }
+            const result = await CustomApiRequest<GetComponent>(`components/groups`, payload, "POST")
+              
+            const newGroupNode = {
+                id: String(result.id),
+                type:  result.type,
+                data: {label: 'gorup'},
+                style: { width: result.width, height: result.height },
+                position: {x: result.x_pos, y: result.y_pos}
+            }
+
+            setNodes((nds) => {
+                const baseNodes = [newGroupNode, ...nds];
+
+                return baseNodes.map((nd) => {
+                    if (selectedNodeIds.includes(nd.id)) {
+                        return {
+                            ...nd,
+                            parentId: newGroupNode.id,
+                            selected: false,
+                            position: {
+                                x: nd.position.x - newGroupNode.position.x,
+                                y: nd.position.y - newGroupNode.position.y
+                            }
+                        };
+                    }
+                    return nd;
+                });
+            });
+        }
+    useCanvasShortcuts({onGroup: foo});
+
     return (
         
         <div className="flex h-screen w-full overflow-hidden" >
@@ -341,6 +374,7 @@ export const ProjectCanvas = observer(() => {
                 isVisible={showToolbar} 
                 selectedObjects={selectedObj} 
                 onClose={() => setShowToolbar(false)}
+                onGroup={foo}
             />
             <ReactFlow
             nodes={nodes}
@@ -362,8 +396,6 @@ export const ProjectCanvas = observer(() => {
             selectionOnDrag={true}
             selectionKeyCode={null}
             panOnDrag = {[1]}
-            
-
             > 
             <Background />
             <Controls />
