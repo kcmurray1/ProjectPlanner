@@ -48,8 +48,7 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 
  
 export const ProjectCanvas = observer(() => {
-    const { getIntersectingNodes } = useReactFlow();
-    const { screenToFlowPosition } = useReactFlow();
+    const { getIntersectingNodes, screenToFlowPosition, getNodes } = useReactFlow();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [nodeMenu, setNodeMenu] = useState<{x: number; y: number; top: number; left: number, nodeID: string} | null>(null);
@@ -241,55 +240,87 @@ export const ProjectCanvas = observer(() => {
     const onNodeDragStop: OnNodeDrag<Node> = useCallback(
         async (_, node) => {
     
-          const payload = {
-            x_pos : node.position.x,
-            y_pos: node.position.y
-          };
+        //   const payload = {
+        //     x_pos : node.position.x,
+        //     y_pos: node.position.y
+        //   };
           try {
-            await CustomApiRequest<{x: number, y: number}>(`components/${node.id}`, payload, "PATCH")
+            // await CustomApiRequest<{x: number, y: number}>(`components/${node.id}`, payload, "PATCH")
             // check for intersections with a group
             const intersections = getIntersectingNodes(node).filter((nd)=>{
                 return (nd.type == 'groupComponent')
             });
 
-       
-
-            if (intersections.length > 0)
-            {
-                // check if intersecting same group
-                // how to handle multiple groups?
-
-                console.log(intersections);
-
+            let payload: Record<string, any> = {}
+            let position = {
+                x_pos: node.position.x,
+                y_pos: node.position.y
             }
-            else{
-                // check if node was in a group but was dragged outside
-                
-               
-                if (node.parentId)
-                {
-                    setNodes((nds)=>{
+            let updatedNode: Node = {
+                ...node,
+                position: {x: position.x_pos, y: position.y_pos}
+            };
 
-                        const oldParent = nds.find((nd)=>nd.id === node.parentId);
-                        return nds.map((nd)=>{
-                            
-                            if (nd.id === node.id && oldParent){
-                                return {
-                                    ...node,
-                                    parentId: undefined,
-                                    position: {
-                                        x: node.position.x + oldParent.position.x,
-                                        y: node.position.y + oldParent.position.y
-                                    }
-                                }
-                            }
-                            return nd;
-                        })
-                    })
-                }
-            }
+
+            // Get parent position
             
 
+            if (intersections.length > 0 && node.type !== "groupComponent")
+            {
+                console.log("moving group")
+                // FIXME: currently just pick the first overlapping group, adjust so it groups to most overlappinmg node
+                const newParent = intersections[0];
+                // only update position if intersection with group that node is already in
+                if (node.parentId !== newParent.id) {
+                    position["x_pos"] = node.position.x - newParent.position.x
+                    position["y_pos"] = node.position.y - newParent.position.y
+                    payload["group_id"] = newParent.id;
+                    updatedNode = {
+                        ...node, 
+                        position : {x: position.x_pos, y: position.y_pos},
+                        parentId: newParent.id
+                    }
+                }
+            }
+            else{
+                // check if node was in a group but was dragged outside     
+                if (node.parentId)
+                {
+                    const oldParent = getNodes().find((nd)=>nd.id ===node.parentId);
+                    if (oldParent){
+                        position["x_pos"] = node.position.x + oldParent.position.x;
+                        position["y_pos"] = node.position.y + oldParent.position.y;
+                        payload["group_id"] = null;
+                         updatedNode = {
+                        ...node, 
+                        position : {x: position.x_pos, y: position.y_pos},
+                        parentId: undefined
+                    }
+                    }
+                }
+            }
+            payload = {
+                ...payload,
+                x_pos: position.x_pos,
+                y_pos: position.y_pos
+                
+            }
+        
+            await CustomApiRequest<{x: number, y: number}>(`components/${node.id}`, payload, "PATCH")
+        
+
+            setNodes((nds) => {
+                return nds.map((nd)=> {
+                    if (nd.id === node.id) {
+                        return {
+                            ...node,
+                            parentId: updatedNode.parentId,
+                            position: updatedNode.position
+                        }
+                    }
+                    return nd;
+                })
+            })
           } catch (err) {
             console.error("Failed to save node position:", err);
           }

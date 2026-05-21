@@ -76,6 +76,7 @@ async def read_component(id: int, session: Session = Depends(get_session)):
 @router.patch("/{id}", response_model=ComponentRead)
 async def update_component(id: int, component_data: dict, session: Session = Depends(get_session)):
 
+    print(component_data)
     db_comp = session.get(Component, id)
 
     db_comp.model_dump(exclude_unset=True)
