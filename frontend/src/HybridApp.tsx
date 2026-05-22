@@ -21,8 +21,8 @@ import {
   type OnSelectionChangeParams,
 } from '@xyflow/react';
 
-import { TextNode } from './TextNode';
-import { CustomGroupComponent } from './CustomGroupComponent';
+
+import { TaskNode, GroupNode } from './components/node';
 import { CustomApiRequest, type GetComponents, type GetComponent} from './FetchApI';
 import { observer } from 'mobx-react-lite';
 import { observableFlowStore } from './MyStore';
@@ -32,16 +32,21 @@ import { useCanvasShortcuts } from './shortcuts';
 import { SelectionToolbar } from './NodeToolBar';
 import { PaneMenu } from './PaneMenu';
 
-const nodeTypes = {textNode: TextNode, groupComponent: CustomGroupComponent}
+const nodeTypes = {taskNode: TaskNode, groupNode: GroupNode}
 
-const groupName = "groupComponent"
+const nodeNames = {taskNode: "taskNode", group: "groupNode"}
+const groupName = "groupNode"
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
  
 const defaultEdgeOptions: DefaultEdgeOptions = {
-  animated: true,
+  type: "smoothstep",
+  style: {
+    strokeWidth: 5,
+  },
+  interactionWidth: 25
 };
  
 
@@ -216,12 +221,12 @@ export const ProjectCanvas = observer(() => {
         }, []
     )
 
-    const handleAddNode = async (x: number, y: number) => {
+    const handleAddNode = async (x: number, y: number, type: string) => {
         try {
-            const result = await CustomApiRequest<GetComponent>(`components`, {name: 'New Node', x_pos: x, y_pos: y, width: 230, height: 150, parent_id: currentPane}, "POST")
+            const result = await CustomApiRequest<GetComponent>(`components`, {name: 'New Node', x_pos: x, y_pos: y, width: 230, height: 150, parent_id: currentPane, type: type}, "POST")
             const newNode: Node = {
                 id: String(result.id),
-                type: 'textNode',
+                type: type,
                 data: {label: result.name},
                 position: {x: result.x_pos, y: result.y_pos},
                 width: result.width,
@@ -237,18 +242,12 @@ export const ProjectCanvas = observer(() => {
     }
 
 
+
     const onNodeDragStop: OnNodeDrag<Node> = useCallback(
         async (_, node) => {
-    
-        //   const payload = {
-        //     x_pos : node.position.x,
-        //     y_pos: node.position.y
-        //   };
           try {
-            // await CustomApiRequest<{x: number, y: number}>(`components/${node.id}`, payload, "PATCH")
-            // check for intersections with a group
             const intersections = getIntersectingNodes(node).filter((nd)=>{
-                return (nd.type == 'groupComponent')
+                return (nd.type == groupName)
             });
 
             let payload: Record<string, any> = {}
@@ -261,13 +260,8 @@ export const ProjectCanvas = observer(() => {
                 position: {x: position.x_pos, y: position.y_pos}
             };
 
-
-            // Get parent position
-            
-
-            if (intersections.length > 0 && node.type !== "groupComponent")
+            if (intersections.length > 0 && node.type !== groupName)
             {
-                console.log("moving group")
                 // FIXME: currently just pick the first overlapping group, adjust so it groups to most overlappinmg node
                 const newParent = intersections[0];
                 // only update position if intersection with group that node is already in
@@ -418,7 +412,6 @@ export const ProjectCanvas = observer(() => {
             onConnect={onConnect}
             onPaneContextMenu={onPaneContextMenu}
             onNodeContextMenu={onNodeContextMenu}
-            // onNodeDrag={onNodeDrag}
             onSelectionChange={handleSelectionChange}
             onNodeDragStop={onNodeDragStop}
             fitView
@@ -442,7 +435,7 @@ export const ProjectCanvas = observer(() => {
                 closeMenu={() => setNodeMenu(null)} 
                 />
             )}
-             {menu && ( <PaneMenu menu={menu} onAddNode={handleAddNode} onAddGroup={()=>{}}/> 
+             {menu && ( <PaneMenu menu={menu} onAddNode={handleAddNode}/> 
           )}
         
         </div>

@@ -20,13 +20,13 @@ import {
   type OnBeforeDelete,
 } from '@xyflow/react';
 
-import { TextNode } from './TextNode';
-import { CustomGroupComponent } from './CustomGroupComponent';
+import { TaskNode, GroupNode } from './components/node';
+
 import { CustomApiRequest, type GetComponents, type GetComponent} from './FetchApI';
 
  
 
-const nodeTypes = {textNode: TextNode, groupComponent: CustomGroupComponent}
+const nodeTypes = {textNode: TaskNode, groupComponent: GroupNode}
 
 const groupName = "groupComponent"
 

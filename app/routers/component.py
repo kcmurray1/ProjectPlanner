@@ -20,6 +20,7 @@ async def create_component(component: Component, session: Session = Depends(get_
 
     if component.parent_id == 0:
         component.parent_id = None
+    print(component);
     session.add(component)
     session.commit()
     session.refresh(component)
@@ -101,7 +102,7 @@ async def create_component_group(data: dict, session: Session = Depends(get_sess
 
     new_group = Component(
         name="New Group",
-        type="groupComponent",
+        type="groupNode",
         x_pos=data.get("x_pos"),
         y_pos=data.get("y_pos"),
         width=data.get("width"),   

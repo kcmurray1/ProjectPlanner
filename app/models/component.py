@@ -3,8 +3,9 @@ from typing import List, Optional
 from enum import Enum
 
 class ComponentType(str, Enum):
-    DEFAULT = "textNode"
-    GROUP = "groupComponent"
+    DEFAULT = "taskNode"
+    GROUP = "groupNode"
+
 
 class ComponentBase(SQLModel):
     name: str

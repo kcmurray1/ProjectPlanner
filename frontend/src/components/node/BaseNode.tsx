@@ -1,35 +1,17 @@
-import { type NodeProps, Handle, Position, NodeResizer, type OnResizeEnd, type ResizeDragEvent, type ResizeParams, useReactFlow, NodeToolbar } from "@xyflow/react";
-import React, { useCallback, useState, memo, useRef, useEffect} from "react";
-import { CustomApiRequest } from "./FetchApI";
-import { observableFlowStore } from "./MyStore";
+import { type NodeProps, NodeResizer, type OnResizeEnd, type ResizeDragEvent, type ResizeParams} from "@xyflow/react";
+import React, { useCallback, useState} from "react";
+import { CustomApiRequest } from "../../FetchApI";
+import { observableFlowStore } from "../../MyStore";
 import { observer } from "mobx-react-lite";
 
 
-const BiDirectionalHandle = ({id, position}: {id: string, position: Position} ) =>{
-    return (
-        <>
-            <Handle
-            key={id}
-            type="target"
-            position={position}
-            id={`handle-${id}`}
-            className="default-node-handle"
-            />
-            <Handle
-            key={`${id}-in`}
-            type="source"
-            position={position}
-            id={`handle-in-${id}`}
-            className="default-node-handle"
-            />
-        </>
-    )
+interface BaseNodeProps extends NodeProps {
+  children?: React.ReactNode;
 }
 
-export const TextNode = observer(({id, data, selected}: NodeProps) => {
+export const BaseNode = observer(({id, data, selected, children}: BaseNodeProps) => {
     
     const [value, setValue] = useState<string>(`${data.label}`);
-    const [descValue, setDescValue] = useState<string>("Description..");
     const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
 
@@ -101,11 +83,7 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
                 minHeight={150} // Increased min-height so header + empty body fits cleanly
                 onResizeEnd={onResizeEnd} 
             />
-            <BiDirectionalHandle id="left" position={Position.Left} />
-            <BiDirectionalHandle id="right" position={Position.Right} />
-            <BiDirectionalHandle id="top" position={Position.Top} />
-            <BiDirectionalHandle id="bottom" position={Position.Bottom} />
-
+          
             <div className="default-node-header" onDoubleClick={handleDoubleClick}>
 
                 <input   
@@ -119,17 +97,7 @@ export const TextNode = observer(({id, data, selected}: NodeProps) => {
                 />
             </div>
 
-            <div className="default-node-body">
-                <textarea className={`${selected ? "nodrag nopan is-renaming" : ""}`}
-                    onChange={(e) => {
-                        e.target.style.height = 'auto'; 
-                        setDescValue(e.target.value);                        
-                        e.target.style.height = `${e.target.scrollHeight}px`;
-                    }}
-                    value={descValue}
-                >
-                </textarea>
-            </div>
+            {children}
 
 
 
