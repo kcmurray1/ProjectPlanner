@@ -1,5 +1,13 @@
 import type { Component } from "react"
 
+
+interface ITask {
+    id: number
+    title: string
+    status: string
+    description: string
+}
+
 interface IComponent {
     id: number
     name: string
@@ -10,6 +18,7 @@ interface IComponent {
     type: string
     group_id: number
     parent_id: string
+    tasks: ITask[]
 }
 
 // {

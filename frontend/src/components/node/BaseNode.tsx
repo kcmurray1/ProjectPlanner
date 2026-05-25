@@ -7,14 +7,16 @@ import { observer } from "mobx-react-lite";
 
 interface BaseNodeProps extends NodeProps {
   children?: React.ReactNode;
+  headerRight?: React.ReactNode;
 }
 
-export const BaseNode = observer(({id, data, selected, children}: BaseNodeProps) => {
+export const BaseNode = observer(({id, data, selected, children, headerRight}: BaseNodeProps) => {
     
     const [value, setValue] = useState<string>(`${data.label}`);
     const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
-
+    const minWidth = 250
+    const minHeight = 150
    
     const onChange = useCallback((evt : React.ChangeEvent<HTMLInputElement>) => {
         
@@ -65,7 +67,7 @@ export const BaseNode = observer(({id, data, selected, children}: BaseNodeProps)
     
     return (
         <div 
-            onBlur={onBlur} 
+        
             className={`text-updater-node ${data.className || ''} ${isRenaming ? "nodrag nopan" : ""}`}
             style={{
                 display: 'flex',
@@ -79,12 +81,12 @@ export const BaseNode = observer(({id, data, selected, children}: BaseNodeProps)
             <NodeResizer
                 color="#ff0071"
                 isVisible={selected}
-                minWidth={150}
-                minHeight={150} // Increased min-height so header + empty body fits cleanly
+                minWidth={minWidth}
+                minHeight={minHeight} // Increased min-height so header + empty body fits cleanly
                 onResizeEnd={onResizeEnd} 
             />
           
-            <div className="default-node-header" onDoubleClick={handleDoubleClick}>
+            <div className="default-node-header" onBlur={onBlur} onDoubleClick={handleDoubleClick}>
 
                 <input   
                     id="text" 
@@ -95,6 +97,11 @@ export const BaseNode = observer(({id, data, selected, children}: BaseNodeProps)
                     disabled={!isRenaming}
                     className={`${isRenaming ? "nodrag nopan is-renaming" : ""}`}
                 />
+                {headerRight && (
+                    <div className="nodrag nopan flex items-center gap-1.5 font-normal">
+                        {headerRight}
+                    </div>
+                )}
             </div>
 
             {children}

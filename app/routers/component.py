@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
 from app.dependencies import get_session
-from app.models.component import Component, ComponentReadWithRelationships, ComponentRead
+from app.models.component import Component, ComponentReadWithRelationships, ComponentRead, Task
 from app.models.edge import Edge
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
@@ -11,9 +11,22 @@ router = APIRouter(
     tags=["components"]
 )
 
-@router.get("/")
+from typing import List
+from sqlalchemy.orm import selectinload
+
+@router.get("/", response_model=List[ComponentReadWithRelationships])
 async def read_components(session: Session = Depends(get_session)):
-    return session.exec(select(Component)).all()
+    statement = (
+        select(Component)
+        .options(
+            selectinload(Component.children),
+            selectinload(Component.parent),
+            selectinload(Component.tasks) 
+        )
+    )
+    results = session.exec(statement).all()
+    
+    return [ComponentReadWithRelationships.model_validate(item) for item in results]
 
 @router.post("/")
 async def create_component(component: Component, session: Session = Depends(get_session)):
@@ -28,7 +41,15 @@ async def create_component(component: Component, session: Session = Depends(get_
 
 @router.get("/diagram")
 async def read_components(parent_id: Optional[int]=None, session: Session = Depends(get_session)):
-    statement = select(Component, Edge).join(Edge, Edge.source == Component.id, isouter=True)
+    statement = (
+        select(Component, Edge)
+        .join(Edge, Edge.source == Component.id, isouter=True)
+        .options(
+            selectinload(Component.tasks),
+            selectinload(Component.children),
+            selectinload(Component.parent)
+        )
+    )
 
     if not parent_id or parent_id is None:
         statement = statement.where(Component.parent_id == None)
@@ -46,7 +67,10 @@ async def read_components(parent_id: Optional[int]=None, session: Session = Depe
 
         if edge:
             edges.append(edge)        
-    return {"nodes": list(nodes_temp.values()), "edges": edges}
+    return {
+        "nodes": [ComponentReadWithRelationships.model_validate(c) for c in nodes_temp.values()], 
+        "edges": edges
+    }
     
 
 @router.delete("/bulk-delete")
@@ -65,14 +89,15 @@ async def read_component(id: int, session: Session = Depends(get_session)):
         .where(Component.id==id)
         .options(
             selectinload(Component.children),
-            selectinload(Component.parents)
+            selectinload(Component.parent),
+            selectinload(Component.tasks)
         )
     )
     result = session.exec(
         statement
     ).one_or_none()
 
-    return result
+    return ComponentReadWithRelationships.model_validate(result)
 
 @router.patch("/{id}", response_model=ComponentRead)
 async def update_component(id: int, component_data: dict, session: Session = Depends(get_session)):
@@ -88,9 +113,8 @@ async def update_component(id: int, component_data: dict, session: Session = Dep
     session.refresh(db_comp)
     return db_comp
 
-@router.post("/groups")
+@router.post("/groups", response_model=ComponentReadWithRelationships)
 async def create_component_group(data: dict, session: Session = Depends(get_session)):
-    print(data)
     # Check if nodes are already part of group
     node_ids = data.get("nodes")
     # create group component
@@ -107,16 +131,16 @@ async def create_component_group(data: dict, session: Session = Depends(get_sess
         y_pos=data.get("y_pos"),
         width=data.get("width"),   
         height=data.get("height"),
-        parent_id=base_node.parent_id # ensure this exists in same pane as other nodes
+        parent_id=base_node.parent_id
     )
+
 
     session.add(new_group)
     session.flush()
 
     for child in children:
-        if child.parent_id:
-            print(f"Node {child.id} is moving from group {child.group_id} to {new_group.id}")
-            return 
+        if child.group_id:
+            print(f"Node {child.id} is moving from group {child.group_id} to {new_group.id}") 
         child.group_id = new_group.id
         child.x_pos -= new_group.x_pos
         child.y_pos -= new_group.y_pos
@@ -126,6 +150,19 @@ async def create_component_group(data: dict, session: Session = Depends(get_sess
     session.commit()
     session.refresh(new_group)
 
-    return new_group
+    return ComponentReadWithRelationships.model_validate(new_group)
+
+@router.post("/{id}/tasks")
+async def create_task(id: int, task: Task, session: Session = Depends(get_session)):
+    print(task)
+
+    task.component_id = id
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+
+    return task
+
+
 
 

@@ -1,7 +1,46 @@
 
 import { makeAutoObservable, reaction, runInAction, toJS } from "mobx";
-import { CustomApiRequest, type GetComponent, type GetComponents } from "./FetchApI";
-import type { Node, Edge} from "@xyflow/react";
+import type { Node } from "@xyflow/react";
+import { CustomApiRequest } from "./FetchApI";
+
+
+
+interface Task {
+    description: string
+    title: string
+    status: string
+    id: number
+}
+
+
+export class ObservableTaskModel {
+    id: number;
+    title: string;
+    status: string;
+    description: string = "";
+
+    constructor(id: number, title: string, status: string = "not_started", description: string) {
+        this.id = id;
+        this.title = title;
+        this.status = status;
+        this.description = description;
+        makeAutoObservable(this);
+    }
+
+    updateStatus(newStatus: string) {
+        this.status = newStatus;
+    }
+
+    async updateProperty(id: number, payload: Partial<ObservableTaskModel>) {
+        try {
+            Object.assign(this, payload);
+            await CustomApiRequest<{name: string}>(`tasks/${id}`, payload, "PATCH");
+        }
+        catch (err) {
+            console.error('failed to update task', err);
+        }
+    }
+}
 
 export class ObservableNodeModel {
     id: string;
@@ -11,6 +50,9 @@ export class ObservableNodeModel {
     isPriority: boolean = false;
     isEditing: boolean = false;
     isSelected: boolean = false;
+   
+
+    tasks: ObservableTaskModel[] = []
 
     constructor(id: string, name: string, type: string, parent_id: string | null) {
         this.id = id;
@@ -20,17 +62,28 @@ export class ObservableNodeModel {
         makeAutoObservable(this);
     }
 
-    // High-performance computed progress propagation
-    // get progress() {
-    //     if (this.todos.length === 0) return 100;
-    //     return (this.todos.filter(t => t.done).length / this.todos.length) * 100;
-    // }
+    addTask(taskData: any) {
+        const newTask = new ObservableTaskModel(
+                taskData.id,
+                taskData.title,
+                taskData.status,
+                taskData.description
+            )
+        this.tasks.push(
+            newTask
+        );
 
-    // get nodeColor() {
-    //     if (this.progress < 30) return "#ef4444";
-    //     if (this.progress < 80) return "#f59e0b";
-    //     return "#10b981";
-    // }
+        return newTask
+    }
+
+    get progress() {
+        if (this.tasks.length === 0) return 100;
+        return (this.tasks.filter(t => t.status === "completed").length / this.tasks.length) * 100;
+    }
+
+    
+
+    
 }
 
 interface Pane {
@@ -45,16 +98,28 @@ class ObservableFlowStore {
     currentPane = 0;
     paneHistory: Pane[] = [{id:"0", label: "home"}]
 
+    
+    selectedTask: ObservableTaskModel | null = null;
 
     constructor() {
         makeAutoObservable(this)        
+    }
+
+
+    selectTask(task: ObservableTaskModel | null) {
+        this.selectedTask = task;
+    }
+
+    // 3. Clear action to close the workspace panel cleanly
+    clearSelectedTask() {
+        this.selectedTask = null;
     }
 
     loadProjectData(nodeData: Node[]) {
         runInAction(() => {
             this.nodesMap.clear();
 
-            nodeData.forEach((node: Node) => {
+            nodeData.forEach((node: any) => {
                 const { label } = node.data as {label: string};
                 const nodeModel = new ObservableNodeModel(
                     node.id,
@@ -64,6 +129,13 @@ class ObservableFlowStore {
                 )
 
                 this.nodesMap.set(node.id, nodeModel);
+                
+                if (node.tasks) {
+                    nodeModel.tasks = [];
+                    node.tasks.forEach((taskData: any) => {
+                        nodeModel.addTask(taskData);
+                    })
+                }
             })
         })
     }
@@ -115,6 +187,23 @@ class ObservableFlowStore {
             runInAction(() => {
            node.label = newLabel
         });
+        }
+    }
+
+    async createTask(nodeID: string) {
+        const node = this.nodesMap.get(nodeID);
+
+        if (!node) {return;}
+
+        let payload = {"title": "task title", "description": "Add a task using a btn"}                  
+        try {
+            const newTask = await CustomApiRequest<Task>(`components/${node.id}/tasks`, payload, "POST")
+            runInAction(() =>{
+                this.selectedTask = node.addTask(newTask);
+            })
+            
+        } catch (err) {
+            console.error("failed to create task", err);
         }
     }
 

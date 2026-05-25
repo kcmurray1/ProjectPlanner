@@ -19,6 +19,7 @@ import {
   type NodeMouseHandler,
   type OnBeforeDelete,
   type OnSelectionChangeParams,
+  ControlButton,
 } from '@xyflow/react';
 
 
@@ -31,6 +32,7 @@ import { PaneBreadcrumbs } from './PaneBreadcrumb';
 import { useCanvasShortcuts } from './shortcuts';
 import { SelectionToolbar } from './NodeToolBar';
 import { PaneMenu } from './PaneMenu';
+import { TaskSidebar } from './TaskSidebar';
 
 const nodeTypes = {taskNode: TaskNode, groupNode: GroupNode}
 
@@ -67,6 +69,7 @@ export const ProjectCanvas = observer(() => {
             const res = await CustomApiRequest<{nodes: GetComponents, edges: Edge[]}>(`components/diagram?parent_id=${paneID}`, null, "GET")
 
             const {nodes, edges} = res    
+            console.log(nodes, edges);
             //Ensure groups nodes are created first, nested groups are unsupported
             const sortedData = [...nodes].sort((a, b) => {
                 if (a.type === groupName && b.type !== groupName) return -1;
@@ -77,6 +80,7 @@ export const ProjectCanvas = observer(() => {
             const myNodes: Node[] = sortedData.map((component) => {
                 return {
                 id: String(component.id),
+                tasks: component.tasks,
                 data: { label: component.name },
                 position: { x: component.x_pos, y: component.y_pos },
                 type: component.type,
@@ -122,7 +126,7 @@ export const ProjectCanvas = observer(() => {
     const onNodeContextMenu = useCallback( (event: MouseEvent | React.MouseEvent<Element, MouseEvent>, node: any) => {
     // Prevent the default browser context menu from popping up
     event.preventDefault();
-    console.log('right cliked', node.id, node.position);
+    console.log('right cliked', node.id, node.position, node.width);
     // observableFlowStore.setNodeToEdit(node.id, true);
         const canvasViewport = document.getElementById('rf-viewport-wrapper');
         if (!canvasViewport) return;
@@ -169,6 +173,7 @@ export const ProjectCanvas = observer(() => {
     const handleNodeDoubleClick: NodeMouseHandler<Node> = useCallback(
         async (_: React.MouseEvent, node: Node) =>
         {
+            if (node.type !== "taskNode") {return;}
             observableFlowStore.addPaneHistory(node.id);
         }, []
     )
@@ -359,7 +364,7 @@ export const ProjectCanvas = observer(() => {
 
             const payload = {"nodes": selectedNodeIds, x_pos: calculatedX, y_pos: calculatedY, width: calculatedWidth, height: calculatedHeight }
             const result = await CustomApiRequest<GetComponent>(`components/groups`, payload, "POST")
-              
+            console.log(result)
             const newGroupNode = {
                 id: String(result.id),
                 type:  result.type,
@@ -422,7 +427,9 @@ export const ProjectCanvas = observer(() => {
             panOnDrag = {[1]}
             > 
             <Background />
-            <Controls />
+            {/* <Controls />
+             */}
+            
             <MiniMap/>
             </ReactFlow>
            {nodeMenu && (
@@ -437,6 +444,7 @@ export const ProjectCanvas = observer(() => {
             )}
              {menu && ( <PaneMenu menu={menu} onAddNode={handleAddNode}/> 
           )}
+          <TaskSidebar/>
         
         </div>
         </div>
