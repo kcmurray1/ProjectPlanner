@@ -44,6 +44,13 @@ export const TaskSidebar = observer(() => {
             }
         }, [desc, task]);
 
+    
+    const onTitleChange = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.currentTarget.blur(); 
+        }
+        };
+
     return (
         <div 
             className={`fixed top-0 right-0 h-full w-[450px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) ${
@@ -60,6 +67,7 @@ export const TaskSidebar = observer(() => {
                         value={desc.title}
                         onChange={handleInputChange}
                         onBlur={onBlur}
+                        onKeyDown={onTitleChange}
                         className="w-full font-bold text-slate-800 text-sm bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none transition-colors"
                     />
                     </h3>
