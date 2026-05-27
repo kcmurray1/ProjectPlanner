@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
-import { observableFlowStore } from "./MyStore";
 import { useCallback, useEffect, useState } from "react";
+import { canvasStore } from "./stores/CanvasStore";
 
 
 interface TaskDraft {
@@ -12,7 +12,7 @@ interface TaskDraft {
 
 
 export const TaskSidebar = observer(() => {
-    const task = observableFlowStore.selectedTask;
+    const task = canvasStore.selectedTask;
     const isOpen = task !== null;
     const defaultTask = {
          title: "",
@@ -74,7 +74,7 @@ export const TaskSidebar = observer(() => {
                 </div>
      
                 <button 
-                    onClick={() => observableFlowStore.clearSelectedTask()} 
+                    onClick={() => canvasStore.clearSelectedTask()} 
                     className="w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors font-bold text-sm"
                 >
                     ✕

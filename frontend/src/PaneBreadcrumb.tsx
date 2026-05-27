@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { observableFlowStore } from "./MyStore";
+import { canvasStore } from "./stores/CanvasStore";
 
 
 const CustomBreadcrumbItem = (({label, id}: {label: string, id: string}) =>{
@@ -7,7 +7,7 @@ const CustomBreadcrumbItem = (({label, id}: {label: string, id: string}) =>{
 
 
     return (
-        <button onClick={() => observableFlowStore.jumpToPane(Number(id))}>
+        <button onClick={() => canvasStore.jumpToPane(Number(id))}>
             <span>{label}</span>
         </button>
     )
@@ -16,7 +16,7 @@ const CustomBreadcrumbItem = (({label, id}: {label: string, id: string}) =>{
 
 export const PaneBreadcrumbs = observer(() => {
 
-    const history = observableFlowStore.paneHistory;
+    const history = canvasStore.paneHistory;
 
     return (
         <nav className="pane-breadcrumbs">

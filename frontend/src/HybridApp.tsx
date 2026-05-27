@@ -6,7 +6,6 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   Background,
-  Controls,
   MiniMap,
   type Node,
   type Edge,
@@ -19,14 +18,17 @@ import {
   type NodeMouseHandler,
   type OnBeforeDelete,
   type OnSelectionChangeParams,
-  ControlButton,
 } from '@xyflow/react';
 
 
 import { TaskNode, GroupNode } from './components/node';
 import { CustomApiRequest, type GetComponents, type GetComponent} from './FetchApI';
 import { observer } from 'mobx-react-lite';
+
+
 import { observableFlowStore } from './MyStore';
+import { canvasStore } from './stores/CanvasStore';
+
 import { ContextMenu } from './NodeMenu';
 import { PaneBreadcrumbs } from './PaneBreadcrumb';
 import { useCanvasShortcuts } from './shortcuts';
@@ -67,10 +69,8 @@ export const ProjectCanvas = observer(() => {
     const [edges, setEdges] = useState<Edge[]>([]);
     const [nodeMenu, setNodeMenu] = useState<{x: number; y: number; top: number; left: number, nodeID: string} | null>(null);
     const [menu, setMenu] = useState<{x: number; y: number; top: number; left: number} | null>(null);
- 
-
-    const currentPane = observableFlowStore.currentPane;
-    const currentProject = observableFlowStore.currentProject;
+    
+    const { nodeStore } = canvasStore;
 
     const loadNodes = useCallback(async (paneID: number, currentProjectID: number) => {
         try {
@@ -110,7 +110,7 @@ export const ProjectCanvas = observer(() => {
             }))
             setNodes(myNodes);
             setEdges(myEdges);
-            observableFlowStore.loadProjectData(myNodes, project);
+            canvasStore.loadProjectData(myNodes, project);
         } catch (err) {
 
         }
@@ -118,8 +118,8 @@ export const ProjectCanvas = observer(() => {
     }, []);
     useEffect( () => 
     {
-    loadNodes(currentPane, currentProject.id);
-    }, [currentPane])
+    loadNodes(canvasStore.currentPane, canvasStore.currentProject.id);
+    }, [canvasStore.currentPane])
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -135,7 +135,7 @@ export const ProjectCanvas = observer(() => {
     // Prevent the default browser context menu from popping up
     event.preventDefault();
     console.log('right cliked', node.id, node.position, node.width);
-    // observableFlowStore.setNodeToEdit(node.id, true);
+    // canvasStore.setNodeToEdit(node.id, true);
         const canvasViewport = document.getElementById('rf-viewport-wrapper');
         if (!canvasViewport) return;
     
@@ -182,7 +182,7 @@ export const ProjectCanvas = observer(() => {
         async (_: React.MouseEvent, node: Node) =>
         {
             if (node.type !== "taskNode") {return;}
-            observableFlowStore.addPaneHistory(node.id);
+            canvasStore.addPaneHistory(node.id);
         }, []
     )
 
@@ -235,7 +235,7 @@ export const ProjectCanvas = observer(() => {
     )
 
     const handleAddNode = async (x: number, y: number, type: string) => {
-        const newNode = await observableFlowStore.addNodeV2(x, y, type);
+        const newNode = await nodeStore.createNode(x, y, type);
 
         if (newNode) {
             setNodes((nds) => nds.concat(newNode))

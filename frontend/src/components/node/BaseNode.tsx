@@ -1,8 +1,8 @@
 import { type NodeProps, NodeResizer, type OnResizeEnd, type ResizeDragEvent, type ResizeParams} from "@xyflow/react";
 import React, { useCallback, useState} from "react";
 import { CustomApiRequest } from "../../FetchApI";
-import { observableFlowStore } from "../../MyStore";
 import { observer } from "mobx-react-lite";
+import { canvasStore } from "../../stores/CanvasStore";
 
 
 interface BaseNodeProps extends NodeProps {
@@ -26,7 +26,7 @@ export const BaseNode = observer(({id, data, selected, children, headerRight}: B
     const onBlur = useCallback( async () => {
         try {
             setIsRenaming(false);
-            observableFlowStore.updateLabel(id, value);
+            canvasStore.updateLabel(id, value);
             console.log(value);
             await CustomApiRequest<{name: string}>(`components/${id}`, {name: value}, "PATCH")
             

@@ -43,11 +43,14 @@ export class CanvasStore {
         makeAutoObservable(this)        
     }
 
+    getNode(nodeID: string){
+        return this.nodeStore.nodesMap.get(nodeID);
+    }
 
     selectTask(task: ObservableTaskModel | null) {
         this.selectedTask = task;
     }
-    
+
     clearSelectedTask() {
         this.selectedTask = null;
     }

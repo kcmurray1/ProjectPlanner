@@ -1,7 +1,10 @@
 import { type NodeProps, Handle, Position } from "@xyflow/react";
-import React, { useCallback, useState, memo, useRef, useEffect} from "react";
-import { CustomApiRequest } from "../../FetchApI";
-import { observableFlowStore, ObservableNodeModel, ObservableTaskModel } from "../../MyStore";
+import React from "react";
+
+import { canvasStore } from "../../stores/CanvasStore";
+import { ObservableNodeModel } from "../../stores/nodeStore";
+import { ObservableTaskModel } from "../../stores/TaskStore";
+
 import { observer } from "mobx-react-lite";
 import { BaseNode } from "./BaseNode";
 
@@ -29,7 +32,7 @@ const BiDirectionalHandle = ({id, position}: {id: string, position: Position} ) 
 
 const handleAddTask = async (node: ObservableNodeModel | undefined) => {
     if(!node){return}
-    observableFlowStore.createTask(node.id);
+    canvasStore.createTask(node.id);
 }
 
 const TaskItem = (task : ObservableTaskModel) => {
@@ -37,7 +40,7 @@ const TaskItem = (task : ObservableTaskModel) => {
     const openTaskBar = (e: React.MouseEvent) => {
         e.stopPropagation();
 
-        observableFlowStore.selectTask(task)
+        canvasStore.selectTask(task)
 
     }
 
@@ -78,7 +81,7 @@ const TaskItem = (task : ObservableTaskModel) => {
 
 export const TaskNode = observer((nodeData: NodeProps) => {
     const {id, data, selected} = nodeData;
-    const node = observableFlowStore.nodesMap.get(id);
+    const node = canvasStore.getNode(id);
 
     let progressColor = '#22c55e';
 

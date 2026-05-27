@@ -1,6 +1,5 @@
 
-import { makeAutoObservable, reaction, runInAction, toJS } from "mobx";
-import type { Node } from "@xyflow/react";
+import { makeAutoObservable, runInAction} from "mobx";
 import { CustomApiRequest, type GetComponent } from "./../FetchApI";
 import type { CanvasStore } from "./CanvasStore";
 import type { ObservableNodeModel } from "./nodeStore";

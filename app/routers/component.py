@@ -157,7 +157,8 @@ async def create_component_group(data: dict, session: Session = Depends(get_sess
         y_pos=data.get("y_pos"),
         width=data.get("width"),   
         height=data.get("height"),
-        parent_id=base_node.parent_id
+        parent_id=base_node.parent_id,
+        project_id=base_node.project_id
     )
 
 

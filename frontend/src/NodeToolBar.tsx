@@ -1,8 +1,5 @@
 import { useReactFlow, type Edge, type Node } from '@xyflow/react';
 import React from 'react';
-import { CustomApiRequest } from './FetchApI';
-// import { useReactFlow } from '@xyflow/react';
-// import { observableFlowStore } from './ObservableFlowStore';
 
 interface SelectionToolbarProps {
     isVisible: boolean;
