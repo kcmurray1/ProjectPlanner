@@ -85,7 +85,7 @@ export const TaskSidebar = observer(() => {
             <div className="flex-1 p-5 overflow-y-auto">
                 <textarea 
                     onBlur={onBlur}
-                    className="w-full h-64 p-3 border border-slate-200 rounded-md outline-none focus:border-blue-500 font-mono bg-slate-50 text-slate-700 text-sm"
+                    className="w-full h-3/4 p-3 border border-slate-200 rounded-md outline-none focus:border-blue-500 font-mono bg-slate-50 text-slate-700 text-sm"
                     placeholder="Write your system specs, network rules, or execution notes here..."
                     value={desc.description}
                     name="description"

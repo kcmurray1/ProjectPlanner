@@ -2,6 +2,44 @@ from sqlmodel import Field, SQLModel, Relationship, Column, Text
 from typing import List, Optional
 from enum import Enum
 
+
+
+
+class ProjectBase(SQLModel):
+    name: str
+    description: Optional[str] = Field(default=None, sa_column=Column(Text))
+
+    # maybe add created/last updated?
+
+    # maybe have a template feature? Tags?
+    
+class Project(ProjectBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    root_components: List["Component"] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "and_(Project.id == Component.project_id, Component.parent_id==None)",
+            "lazy": "selectin",
+            "overlaps": "all_components,project"
+        }
+    )
+
+    all_components: List["Component"] = Relationship(
+        back_populates="project",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "lazy": "write_only",
+            "overlaps": "root_components"
+            }
+    )
+
+class ProjectRead(ProjectBase):
+    id: int
+
+class ComponentReadWithRelationships(ProjectRead):
+    root_components: List["ComponentRead"] = []
+
+
 class ComponentType(str, Enum):
     DEFAULT = "taskNode"
     GROUP = "groupNode"
@@ -19,6 +57,10 @@ class ComponentBase(SQLModel):
 class Component(ComponentBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     
+    project_id: int = Field(foreign_key="project.id")
+    project: Optional[Project] = Relationship(back_populates="all_components", sa_relationship_kwargs={
+            "overlaps": "root_components"
+        })
     parent_id: Optional[int] = Field(default=None, foreign_key="component.id", ondelete="CASCADE")
 
     group_id: Optional[int] = Field(default=None, foreign_key="component.id", ondelete="CASCADE")

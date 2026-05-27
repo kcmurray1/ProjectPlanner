@@ -56,7 +56,7 @@ const TaskItem = (task : ObservableTaskModel) => {
 
             <select
                 value={task.status}
-                onChange={(e) => task.updateStatus(e.target.value)}
+                onChange={(e) => task.updateProperty(task.id,{status: e.target.value})}
                 className={`text-xs font-semibold px-1.5 py-0.5 rounded border cursor-pointer outline-none transition-colors ${
                     task.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                     task.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :

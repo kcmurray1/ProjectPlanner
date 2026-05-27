@@ -1,7 +1,7 @@
 
 import { makeAutoObservable, reaction, runInAction, toJS } from "mobx";
 import type { Node } from "@xyflow/react";
-import { CustomApiRequest } from "./FetchApI";
+import { CustomApiRequest, type GetComponent } from "./FetchApI";
 
 
 
@@ -12,6 +12,11 @@ interface Task {
     id: number
 }
 
+interface ProjectType {
+    name: string
+    description: string
+    id: number
+}
 
 export class ObservableTaskModel {
     id: number;
@@ -96,6 +101,8 @@ class ObservableFlowStore {
     isLoading = false;
 
     currentPane = 0;
+    currentProject: ProjectType = {id: 0, name: "invalid", description: "invalid description"};
+    isProjectSidebarOpen: boolean = true;
     paneHistory: Pane[] = [{id:"0", label: "home"}]
 
     
@@ -115,10 +122,10 @@ class ObservableFlowStore {
         this.selectedTask = null;
     }
 
-    loadProjectData(nodeData: Node[]) {
+    loadProjectData(nodeData: Node[], project: ProjectType) {
         runInAction(() => {
             this.nodesMap.clear();
-
+            this.currentProject = project;
             nodeData.forEach((node: any) => {
                 const { label } = node.data as {label: string};
                 const nodeModel = new ObservableNodeModel(
@@ -141,6 +148,8 @@ class ObservableFlowStore {
     }
 
     addNode(node: Node){
+
+        
         runInAction(()=>{
             const { label } = node.data as {label: string};
             const nodeModel = new ObservableNodeModel(
@@ -151,6 +160,43 @@ class ObservableFlowStore {
             );
             this.nodesMap.set(node.id, nodeModel);
         })
+    }
+
+    async addNodeV2 (x: number, y: number, type: string) {
+        const payload = {
+            name: 'New Node', 
+            x_pos: x, 
+            y_pos: y, 
+            width: 230, 
+            height: 150, 
+            parent_id: this.currentPane, 
+            project_id: this.currentProject.id,
+            type: type
+
+        }
+        try {
+            const result = await CustomApiRequest<GetComponent>(`components`, payload, "POST")
+            const newNode: Node = {
+                id: String(result.id),
+                type: type,
+                data: {label: result.name},
+                position: {x: result.x_pos, y: result.y_pos},
+                width: result.width,
+                height: result.height
+            }
+            const { label } = newNode.data as {label: string};
+            const nodeModel = new ObservableNodeModel(
+                newNode.id,
+                label,
+                newNode.type ? newNode.type : "textNode",
+                newNode.parentId ? newNode.parentId : null
+            );
+            this.nodesMap.set(newNode.id, nodeModel);
+
+            return newNode
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     setNodeToEdit(id: string, isEditing: boolean){

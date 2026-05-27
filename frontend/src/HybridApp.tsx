@@ -33,6 +33,7 @@ import { useCanvasShortcuts } from './shortcuts';
 import { SelectionToolbar } from './NodeToolBar';
 import { PaneMenu } from './PaneMenu';
 import { TaskSidebar } from './TaskSidebar';
+import { ProjectSidebar } from './components/ProjectSidebar';
 
 const nodeTypes = {taskNode: TaskNode, groupNode: GroupNode}
 
@@ -50,7 +51,13 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   },
   interactionWidth: 25
 };
- 
+
+
+interface ProjectType {
+    name: string
+    description: string
+    id: number
+}
 
 
  
@@ -63,13 +70,14 @@ export const ProjectCanvas = observer(() => {
  
 
     const currentPane = observableFlowStore.currentPane;
+    const currentProject = observableFlowStore.currentProject;
 
-    const loadNodes = useCallback(async (paneID: number) => {
+    const loadNodes = useCallback(async (paneID: number, currentProjectID: number) => {
         try {
-            const res = await CustomApiRequest<{nodes: GetComponents, edges: Edge[]}>(`components/diagram?parent_id=${paneID}`, null, "GET")
+            const res = await CustomApiRequest<{project: ProjectType, nodes: GetComponents, edges: Edge[]}>(`components/diagram?parent_id=${paneID}&project_id=${currentProjectID}`, null, "GET")
 
-            const {nodes, edges} = res    
-            console.log(nodes, edges);
+            const {project, nodes, edges} = res    
+            console.log(nodes, edges,project);
             //Ensure groups nodes are created first, nested groups are unsupported
             const sortedData = [...nodes].sort((a, b) => {
                 if (a.type === groupName && b.type !== groupName) return -1;
@@ -102,7 +110,7 @@ export const ProjectCanvas = observer(() => {
             }))
             setNodes(myNodes);
             setEdges(myEdges);
-            observableFlowStore.loadProjectData(myNodes);
+            observableFlowStore.loadProjectData(myNodes, project);
         } catch (err) {
 
         }
@@ -110,7 +118,7 @@ export const ProjectCanvas = observer(() => {
     }, []);
     useEffect( () => 
     {
-    loadNodes(currentPane);
+    loadNodes(currentPane, currentProject.id);
     }, [currentPane])
 
     const onNodesChange: OnNodesChange = useCallback(
@@ -227,20 +235,10 @@ export const ProjectCanvas = observer(() => {
     )
 
     const handleAddNode = async (x: number, y: number, type: string) => {
-        try {
-            const result = await CustomApiRequest<GetComponent>(`components`, {name: 'New Node', x_pos: x, y_pos: y, width: 230, height: 150, parent_id: currentPane, type: type}, "POST")
-            const newNode: Node = {
-                id: String(result.id),
-                type: type,
-                data: {label: result.name},
-                position: {x: result.x_pos, y: result.y_pos},
-                width: result.width,
-                height: result.height
-            }
-            observableFlowStore.addNode(newNode);
+        const newNode = await observableFlowStore.addNodeV2(x, y, type);
+
+        if (newNode) {
             setNodes((nds) => nds.concat(newNode))
-        } catch (err) {
-            console.log(err);
         }
 
         setMenu(null)
@@ -406,6 +404,7 @@ export const ProjectCanvas = observer(() => {
                 onClose={() => setShowToolbar(false)}
                 onGroup={foo}
             />
+            {/* <ProjectSidebar/> */}
             <ReactFlow
             nodes={nodes}
             nodeTypes={nodeTypes}
@@ -445,6 +444,7 @@ export const ProjectCanvas = observer(() => {
              {menu && ( <PaneMenu menu={menu} onAddNode={handleAddNode}/> 
           )}
           <TaskSidebar/>
+         
         
         </div>
         </div>

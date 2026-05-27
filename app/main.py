@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from sqlmodel import SQLModel
-from .routers import component, edge, task
+from .routers import component, edge, task, project
 from .models.component import Component
 from .models.edge import Edge
 from .dependencies import engine
@@ -11,6 +11,7 @@ app = FastAPI()
 app.include_router(component.router)
 app.include_router(edge.router)
 app.include_router(task.router)
+app.include_router(project.router)
 SQLModel.metadata.create_all(engine)
 app.add_middleware(
     CORSMiddleware,

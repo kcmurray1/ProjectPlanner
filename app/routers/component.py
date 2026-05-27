@@ -2,7 +2,14 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
 from app.dependencies import get_session
-from app.models.component import Component, ComponentReadWithRelationships, ComponentRead, Task
+from app.models.component import (
+    Component, 
+    ComponentReadWithRelationships, 
+    ComponentRead, 
+    Task, 
+    Project,
+    ProjectRead
+)
 from app.models.edge import Edge
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
@@ -40,7 +47,25 @@ async def create_component(component: Component, session: Session = Depends(get_
     return component
 
 @router.get("/diagram")
-async def read_components(parent_id: Optional[int]=None, session: Session = Depends(get_session)):
+async def read_components(parent_id: Optional[int]=None, project_id: Optional[int]=None, session: Session = Depends(get_session)):
+   
+
+    if not project_id or project_id is None:
+        # select most recent project
+
+        recent_project = session.exec(select(Project).order_by(Project.id.desc()).limit(1)).first()
+
+        if recent_project:
+            project_id = recent_project.id
+        else:
+            new_project = Project(name="Untitled Workspace", description="Fresh Canvas Init")
+            session.add(new_project)
+            session.commit()
+            session.refresh(new_project) 
+        
+
+    project = session.get(Project, project_id)
+
     statement = (
         select(Component, Edge)
         .join(Edge, Edge.source == Component.id, isouter=True)
@@ -49,25 +74,26 @@ async def read_components(parent_id: Optional[int]=None, session: Session = Depe
             selectinload(Component.children),
             selectinload(Component.parent)
         )
-    )
-
+    ).where(Component.project_id == project_id)
+    
     if not parent_id or parent_id is None:
+        # Load root component
         statement = statement.where(Component.parent_id == None)
     else:
         statement = statement.where(Component.parent_id == parent_id)
 
     pane = session.exec(statement).all()
     
+
     nodes_temp = {}
     edges = []
     for component, edge in pane:
-        
         if component.id not in nodes_temp:
             nodes_temp[component.id] = component
-
         if edge:
             edges.append(edge)        
     return {
+        "project": ProjectRead.model_validate(project),
         "nodes": [ComponentReadWithRelationships.model_validate(c) for c in nodes_temp.values()], 
         "edges": edges
     }
