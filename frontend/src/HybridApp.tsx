@@ -25,8 +25,6 @@ import { TaskNode, GroupNode } from './components/node';
 import { CustomApiRequest, type GetComponents, type GetComponent} from './FetchApI';
 import { observer } from 'mobx-react-lite';
 
-
-import { observableFlowStore } from './MyStore';
 import { canvasStore } from './stores/CanvasStore';
 
 import { ContextMenu } from './NodeMenu';
@@ -118,8 +116,8 @@ export const ProjectCanvas = observer(() => {
     }, []);
     useEffect( () => 
     {
-    loadNodes(canvasStore.currentPane, canvasStore.currentProject.id);
-    }, [canvasStore.currentPane])
+        loadNodes(canvasStore.currentPane, canvasStore.currentProject.id);
+    }, [canvasStore.currentPane, canvasStore.currentProject.id])
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -394,59 +392,64 @@ export const ProjectCanvas = observer(() => {
 
     return (
         
-        <div className="flex h-screen w-full overflow-hidden" >
-            
-        <div id="rf-viewport-wrapper" className="relative flex-grow h-full" onClick={onPaneClick}>
-            <PaneBreadcrumbs/>
-            <SelectionToolbar 
-                isVisible={showToolbar} 
-                selectedObjects={selectedObj} 
-                onClose={() => setShowToolbar(false)}
-                onGroup={foo}
-            />
-            {/* <ProjectSidebar/> */}
-            <ReactFlow
-            nodes={nodes}
-            nodeTypes={nodeTypes}
-            onNodeDoubleClick={handleNodeDoubleClick}
-            onBeforeDelete={handleBeforeDelete}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onPaneContextMenu={onPaneContextMenu}
-            onNodeContextMenu={onNodeContextMenu}
-            onSelectionChange={handleSelectionChange}
-            onNodeDragStop={onNodeDragStop}
-            fitView
-            fitViewOptions={fitViewOptions}
-            defaultEdgeOptions={defaultEdgeOptions}
-            selectionOnDrag={true}
-            selectionKeyCode={null}
-            panOnDrag = {[1]}
-            > 
-            <Background />
-            {/* <Controls />
-             */}
-            
-            <MiniMap/>
-            </ReactFlow>
-           {nodeMenu && (
-                <ContextMenu 
-                id={nodeMenu.nodeID} 
-                top={nodeMenu.top} 
-                left={nodeMenu.left}
-                flowX={nodeMenu.x}
-                flowY={nodeMenu.y}
-                closeMenu={() => setNodeMenu(null)} 
+        <div className="flex h-screen w-full overflow-hidden flex-col" >
+            <div className="w-full px-6 py-3">
+                <PaneBreadcrumbs />
+            </div>
+            <div 
+                id="rf-viewport-wrapper" 
+                className="relative flex-grow h-[calc(100vh-49px)] w-full" 
+                onClick={onPaneClick}
+            >
+                <SelectionToolbar 
+                    isVisible={showToolbar} 
+                    selectedObjects={selectedObj} 
+                    onClose={() => setShowToolbar(false)}
+                    onGroup={foo}
                 />
+                <ProjectSidebar/>
+                <ReactFlow
+                nodes={nodes}
+                nodeTypes={nodeTypes}
+                onNodeDoubleClick={handleNodeDoubleClick}
+                onBeforeDelete={handleBeforeDelete}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onPaneContextMenu={onPaneContextMenu}
+                onNodeContextMenu={onNodeContextMenu}
+                onSelectionChange={handleSelectionChange}
+                onNodeDragStop={onNodeDragStop}
+                fitView
+                fitViewOptions={fitViewOptions}
+                defaultEdgeOptions={defaultEdgeOptions}
+                selectionOnDrag={true}
+                selectionKeyCode={null}
+                panOnDrag = {[1]}
+                > 
+                <Background />
+                {/* <Controls />
+                */}
+                
+                <MiniMap/>
+                </ReactFlow>
+            {nodeMenu && (
+                    <ContextMenu 
+                    id={nodeMenu.nodeID} 
+                    top={nodeMenu.top} 
+                    left={nodeMenu.left}
+                    flowX={nodeMenu.x}
+                    flowY={nodeMenu.y}
+                    closeMenu={() => setNodeMenu(null)} 
+                    />
+                )}
+                {menu && ( <PaneMenu menu={menu} onAddNode={handleAddNode}/> 
             )}
-             {menu && ( <PaneMenu menu={menu} onAddNode={handleAddNode}/> 
-          )}
-          <TaskSidebar/>
-         
-        
-        </div>
+            <TaskSidebar/>
+            
+            
+            </div>
         </div>
         
     );

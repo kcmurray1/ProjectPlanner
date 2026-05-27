@@ -1,25 +1,44 @@
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
-import { observableFlowStore } from "../MyStore";
-
+import { canvasStore } from "../stores/CanvasStore"; 
 export const ProjectSidebar = observer(() => {
-    const isOpen = observableFlowStore.isProjectSidebarOpen;
-    const activeTab = observableFlowStore.currentProject;
+ 
+    const { projectStore } = canvasStore;
+    
+    const currentActiveProject = canvasStore.currentProject;
+
+    // Local UI state for project creation form inputs
+    const [newProjectName, setNewProjectName] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
+
+    // Fetch initial projects when sidebar mounts
+    useEffect(() => {
+        projectStore.fetchAllProjects();
+    }, []);
+
+    // const handleCreateSubmit = async (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     if (!newProjectName.trim()) return;
+    //     await projectStore.createProject(newProjectName, "Custom workspace description");
+    //     setNewProjectName("");
+    //     setIsCreating(false);
+    // };
 
     return (
-        <div className="fixed top-0 left-0 h-full flex z-40 pointer-events-none">
-            {/* 1. VERTICAL TAB TRIGGER RAIL 
-               This strip remains permanently visible on the screen edge so you can always toggle views
+        <div className="absolute top-0 left-0 h-full flex z-40 pointer-events-none">
+            
+            {/* 1. VERTICAL TAB TRIGGER RAIL (Uncommented and operational) */}
             <div className="h-full w-12 bg-slate-900 border-l border-slate-800 flex flex-col items-center py-4 space-y-4 pointer-events-auto shadow-xl">
                 <button
                     onClick={() => {
-                        if (isOpen && activeTab === "explorer") {
-                            // observableFlowStore.closeProjectSidebar();
+                        if (projectStore.isSidebarOpen && projectStore.activeTab === "explorer") {
+                            projectStore.toggleSidebar();
                         } else {
-                            // observableFlowStore.setProjectTab("explorer");
+                            projectStore.setTab("explorer");
                         }
                     }}
                     className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-                        isOpen && activeTab === "explorer" 
+                        projectStore.isSidebarOpen && projectStore.activeTab === "explorer" 
                             ? "bg-blue-600 text-white" 
                             : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
@@ -30,14 +49,14 @@ export const ProjectSidebar = observer(() => {
 
                 <button
                     onClick={() => {
-                        if (isOpen && activeTab === "summary") {
-                            // observableFlowStore.closeProjectSidebar();
+                        if (projectStore.isSidebarOpen && projectStore.activeTab === "summary") {
+                            projectStore.toggleSidebar();
                         } else {
-                            // observableFlowStore.setProjectTab("summary");
+                            projectStore.setTab("summary");
                         }
                     }}
                     className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-                        isOpen && activeTab === "summary" 
+                        projectStore.isSidebarOpen && projectStore.activeTab === "summary" 
                             ? "bg-blue-600 text-white" 
                             : "text-slate-400 hover:bg-slate-800 hover:text-white"
                     }`}
@@ -45,27 +64,25 @@ export const ProjectSidebar = observer(() => {
                 >
                     📊
                 </button>
-            </div> */}
+            </div>
 
-            {/* 2. THE EXPANDABLE DRAWER CONTENT 
-               Slides out out to the left of the vertical rail */}
+            {/* 2. THE EXPANDABLE DRAWER CONTENT */}
             <div 
-                className={`h-full w-[400px] bg-white border-l border-slate-200 shadow-2xl flex flex-col pointer-events-auto transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) ${
-                    isOpen ? "translate-x-0" : "translate-x-full"
+                className={`h-full w-[400px] bg-white border-r border-slate-200 shadow-2xl flex flex-col pointer-events-auto ${
+                    /* Instant toggle: remove it completely from the page layout grid when closed */
+                    projectStore.isSidebarOpen ? "block" : "hidden"
                 }`}
-                // Offset the drawer layout precisely so it sits perfectly to the left of our 12rem (48px) vertical rail
-                style={{ marginRight: "48px" }}
             >
                 {/* Header Section */}
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <div>
                         <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Workspace Engine</span>
                         <h3 className="text-sm font-bold text-slate-800">
-                            {"explorer" === "explorer" ? "Project Manager" : "Metrics Overview"}
+                            {projectStore.activeTab === "explorer" ? "Project Manager" : "Metrics Overview"}
                         </h3>
                     </div>
                     <button 
-                        // onClick={() => observableFlowStore.closeProjectSidebar()}
+                        onClick={() => projectStore.toggleSidebar()}
                         className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 font-bold"
                     >
                         ✕
@@ -74,17 +91,74 @@ export const ProjectSidebar = observer(() => {
 
                 {/* Dynamic Content Panel Slot */}
                 <div className="flex-1 p-5 overflow-y-auto bg-white">
-                    {"explorer" === "explorer" ? (
-                        /* PROJECT EXPLORER TAB PLACEHOLDER */
-                        <div className="space-y-4 animate-fadeIn">
-                            <p className="text-xs text-slate-400 italic">Project CRUD infrastructure hooks go here...</p>
-                            {/* We will drop your Create/Select/Remove button array blocks here next! */}
+                    {projectStore.activeTab === "explorer" ? (
+                        <div className="space-y-4">
+                            {/* Create Project Mini-Form */}
+                            {isCreating ? (
+                                <form  className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
+                                    <input 
+                                        type="text"
+                                        placeholder="Project Name..."
+                                        value={newProjectName}
+                                        onChange={(e) => setNewProjectName(e.target.value)}
+                                        className="w-full text-xs p-2 border border-slate-300 rounded focus:outline-none focus:border-blue-500"
+                                        autoFocus
+                                    />
+                                    <div className="flex justify-end space-x-2 text-[11px]">
+                                        <button type="button" onClick={() => setIsCreating(false)} className="px-2 py-1 text-slate-500">Cancel</button>
+                                        <button type="submit" className="px-2 py-1 bg-blue-600 text-white rounded font-medium">Save</button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <button 
+                                    onClick={() => setIsCreating(true)}
+                                    className="w-full border border-dashed border-slate-300 text-slate-600 rounded-md p-2 text-xs font-semibold hover:border-blue-500 hover:text-blue-600 transition-colors"
+                                >
+                                    + Create New Workspace
+                                </button>
+                            )}
+
+                            {/* Projects List Loop */}
+                            <div className="space-y-2">
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">All Workspaces</span>
+                                {projectStore.isLoading ? (
+                                    <p className="text-xs text-slate-400 animate-pulse">Loading project index...</p>
+                                ) : (
+                                    projectStore.projects.map((project) => {
+                                        const isActive = currentActiveProject?.id === project.id;
+                                        return (
+                                            <div 
+                                                key={project.id}
+                                                onClick={() => {
+                                                    // Trigger project switch orchestration sequence
+                                                    canvasStore.changeProject(project);
+                                                }}
+                                                className={`p-3 rounded-lg border text-left cursor-pointer transition-all ${
+                                                    isActive 
+                                                        ? "bg-blue-50 border-blue-200 text-blue-900 shadow-sm" 
+                                                        : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50 hover:border-slate-200"
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-xs font-bold">{project.name}</span>
+                                                    {isActive && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">Active</span>}
+                                                </div>
+                                                <p className="text-[11px] text-slate-400 mt-1 truncate">{project.description}</p>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
                     ) : (
-                        /* SUMMARY VIEW TAB PLACEHOLDER */
-                        <div className="space-y-4 animate-fadeIn">
-                            <p className="text-xs text-slate-400 italic">Analytical aggregation loops go here...</p>
-                            {/* We will drop your task summaries and cluster completion graphs here next! */}
+                        /* SUMMARY VIEW TAB PANEL */
+                        <div className="space-y-4">
+                            <p className="text-xs text-slate-500 font-medium">Active Workspace Details:</p>
+                            <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
+                                <h4 className="text-xs font-bold text-slate-800">{currentActiveProject?.name}</h4>
+                                <p className="text-xs text-slate-500 mt-1">{currentActiveProject?.description}</p>
+                            </div>
+                            <p className="text-xs text-slate-400 italic">Analytical aggregation loops will drop here next...</p>
                         </div>
                     )}
                 </div>

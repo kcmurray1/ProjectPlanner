@@ -4,6 +4,7 @@ import type { Node } from "@xyflow/react";
 // import { CustomApiRequest, type GetComponent } from "./FetchApI";
 import { NodeStore } from "./nodeStore";
 import { TaskStore, type ObservableTaskModel } from "./TaskStore";
+import { ProjectStore } from "./ProjectStore";
 
 
 
@@ -25,6 +26,7 @@ export class CanvasStore {
 
     nodeStore: NodeStore
     taskStore: TaskStore
+    projectStore: ProjectStore
 
   
     isLoading = false;
@@ -40,6 +42,7 @@ export class CanvasStore {
     constructor() {
         this.nodeStore = new NodeStore(this);
         this.taskStore = new TaskStore(this);
+        this.projectStore = new ProjectStore(this);
         makeAutoObservable(this)        
     }
 
@@ -69,6 +72,13 @@ export class CanvasStore {
                     })
                 }
             })
+        })
+    }
+
+    changeProject(project: ProjectType){
+        runInAction(()=>{
+            this.currentProject = project;
+            this.currentPane = 0;
         })
     }
 

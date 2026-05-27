@@ -15,7 +15,9 @@ router = APIRouter(
 
 @router.get("/")
 async def read_tasks(session: Session = Depends(get_session)):
-    return session.exec(select(Project)).all()
+    res = session.exec(select(Project)).all()
+    print(res)
+    return res
 
 @router.post("/")
 async def create_component(project: Project, session: Session = Depends(get_session)):
