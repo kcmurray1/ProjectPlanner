@@ -53,14 +53,13 @@ export const TaskSidebar = observer(() => {
 
     return (
         <div 
-            className={`absolute top-0 right-0 h-full w-[450px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) ${
+            className={`project-sidebar absolute top-0 right-0 h-full w-[450px] z-50 flex flex-col  ${
                 isOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
         >
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div className="project-sidebar-header p-4 flex justify-between items-center">
                 <div>
-                    <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Overview</span>
-                    <h3 className="text-sm font-bold text-slate-800 truncate max-w-[340px]">
+                    <h3 className="text-sm font-bold truncate max-w-[340px]">
                         <input 
                         type="text"
                         name="title"
@@ -68,24 +67,24 @@ export const TaskSidebar = observer(() => {
                         onChange={handleInputChange}
                         onBlur={onBlur}
                         onKeyDown={onTitleChange}
-                        className="w-full font-bold text-slate-800 text-sm bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none transition-colors"
+                        className="w-full font-bold text-sm bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-400 outline-none"
                     />
                     </h3>
                 </div>
      
                 <button 
                     onClick={() => canvasStore.clearSelectedTask()} 
-                    className="w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors font-bold text-sm"
+                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-200 hover:text-slate-600 transition-colors font-bold text-sm"
                 >
                     ✕
                 </button>
             </div>
 
    
-            <div className="flex-1 p-5 overflow-y-auto">
+            <div className="flex-1 p-2 overflow-y-auto">
                 <textarea 
                     onBlur={onBlur}
-                    className="w-full h-3/4 p-3 border border-slate-200 rounded-md outline-none focus:border-blue-500 font-mono bg-slate-50 text-slate-700 text-sm"
+                    className="w-full h-3/4 p-3 border border-white/40 rounded-md bg-[var(--accent-bg)] outline-none text-sm"
                     placeholder="Write your system specs, network rules, or execution notes here..."
                     value={desc.description}
                     name="description"

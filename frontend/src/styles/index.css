@@ -3,6 +3,7 @@
 @import "./pane-breadcrumbs.css";
 @import "./pane-menu.css";
 @import "./default-node.css";
+@import "./side-bars.css";
 
 :root {
   --text: #6b6375;

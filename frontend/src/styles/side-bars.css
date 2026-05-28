@@ -1,0 +1,19 @@
+.project-sidebar {
+    background-color: var(--bg);
+    color: var(--text-h);
+}
+
+.project-sidebar-header {
+    background-color: inherit;
+    color: var(--text-h);
+}
+
+
+
+.project-card {
+    background-color:  var(--accent-bg);
+}
+
+.project-summary {
+    background-color: var(--accent-bg);
+}

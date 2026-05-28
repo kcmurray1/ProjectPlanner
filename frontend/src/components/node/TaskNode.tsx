@@ -2,7 +2,7 @@ import { type NodeProps, Handle, Position } from "@xyflow/react";
 import React from "react";
 
 import { canvasStore } from "../../stores/CanvasStore";
-import { ObservableNodeModel } from "../../stores/nodeStore";
+import { ObservableNodeModel } from "../../stores/NodeStore";
 import { ObservableTaskModel } from "../../stores/TaskStore";
 
 import { observer } from "mobx-react-lite";

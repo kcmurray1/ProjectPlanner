@@ -2,7 +2,7 @@
 import { makeAutoObservable, runInAction} from "mobx";
 import { CustomApiRequest } from "./../FetchApI";
 import type { CanvasStore } from "./CanvasStore";
-import type { ObservableNodeModel } from "./nodeStore";
+// import type { ObservableNodeModel } from "./nodeStore";
 interface Project {
     id: number
     name: string

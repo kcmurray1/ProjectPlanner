@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { canvasStore } from "../stores/CanvasStore"; 
+import { Folder, ListCheck } from "lucide-react";
+
+
+
+
 export const ProjectSidebar = observer(() => {
  
     const { projectStore } = canvasStore;
@@ -25,10 +30,10 @@ export const ProjectSidebar = observer(() => {
     // };
 
     return (
-        <div className="absolute top-0 left-0 h-full flex z-40 pointer-events-none">
+        <div className="project-sidebar absolute top-0 left-0 h-full flex z-40 pointer-events-none">
             
-            {/* 1. VERTICAL TAB TRIGGER RAIL (Uncommented and operational) */}
-            <div className="h-full w-12 bg-slate-900 border-l border-slate-800 flex flex-col items-center py-4 space-y-4 pointer-events-auto shadow-xl">
+            {/* 1. VERTICAL navbar */}
+            <div className="h-full w-16 flex flex-col items-center py-4 space-y-4 pointer-events-auto">
                 <button
                     onClick={() => {
                         if (projectStore.isSidebarOpen && projectStore.activeTab === "explorer") {
@@ -37,16 +42,17 @@ export const ProjectSidebar = observer(() => {
                             projectStore.setTab("explorer");
                         }
                     }}
-                    className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
+                    className={`w-14 h-auto py-2 flex-col flex items-center justify-center  ${
                         projectStore.isSidebarOpen && projectStore.activeTab === "explorer" 
                             ? "bg-blue-600 text-white" 
-                            : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                            : "hover:bg-slate-800 hover:text-white"
                     }`}
                     title="Project Management"
-                >
-                    📁
+                >   
+                    <Folder className="text-current" />
+                    <span className="text-[11px] font-medium tracking-wide">Projects</span>
                 </button>
-
+                
                 <button
                     onClick={() => {
                         if (projectStore.isSidebarOpen && projectStore.activeTab === "summary") {
@@ -55,72 +61,68 @@ export const ProjectSidebar = observer(() => {
                             projectStore.setTab("summary");
                         }
                     }}
-                    className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
+                    className={`w-14 h-auto py-2 flex-col flex items-center justify-center ${
                         projectStore.isSidebarOpen && projectStore.activeTab === "summary" 
                             ? "bg-blue-600 text-white" 
-                            : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                            : "hover:bg-slate-800 hover:text-white"
                     }`}
-                    title="Workspace Dashboard Summary"
+                    title="Project Summary"
                 >
-                    📊
+                    <ListCheck/>
+                   <span className="text-[11px] font-medium tracking-wide">Summary</span>
                 </button>
             </div>
 
             {/* 2. THE EXPANDABLE DRAWER CONTENT */}
             <div 
-                className={`h-full w-[400px] bg-white border-r border-slate-200 shadow-2xl flex flex-col pointer-events-auto ${
-                    /* Instant toggle: remove it completely from the page layout grid when closed */
+                className={`h-full w-[400px] shadow-2xl flex flex-col pointer-events-auto ${
                     projectStore.isSidebarOpen ? "block" : "hidden"
                 }`}
             >
                 {/* Header Section */}
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div className="p-4 flex border-b justify-between items-center project-sidebar-header">
                     <div>
-                        <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Workspace Engine</span>
-                        <h3 className="text-sm font-bold text-slate-800">
-                            {projectStore.activeTab === "explorer" ? "Project Manager" : "Metrics Overview"}
+                        <h3 className="text-sm font-bold">
+                            {projectStore.activeTab === "explorer" ? "Projects" : "Project Overview"}
                         </h3>
                     </div>
                     <button 
                         onClick={() => projectStore.toggleSidebar()}
-                        className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 font-bold"
+                        className="w-6 h-6 flex items-center justify-center hover:text-slate-600 font-bold"
                     >
                         ✕
                     </button>
                 </div>
 
-                {/* Dynamic Content Panel Slot */}
-                <div className="flex-1 p-5 overflow-y-auto bg-white">
+                <div className="flex-1 p-5 overflow-y-auto">
                     {projectStore.activeTab === "explorer" ? (
                         <div className="space-y-4">
-                            {/* Create Project Mini-Form */}
                             {isCreating ? (
-                                <form  className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
+                                <form  className="p-3 rounded-md space-y-2">
                                     <input 
                                         type="text"
                                         placeholder="Project Name..."
                                         value={newProjectName}
                                         onChange={(e) => setNewProjectName(e.target.value)}
-                                        className="w-full text-xs p-2 border border-slate-300 rounded focus:outline-none focus:border-blue-500"
+                                        className="w-full text-xs p-2 border  rounded focus:outline-none"
                                         autoFocus
                                     />
                                     <div className="flex justify-end space-x-2 text-[11px]">
-                                        <button type="button" onClick={() => setIsCreating(false)} className="px-2 py-1 text-slate-500">Cancel</button>
-                                        <button type="submit" className="px-2 py-1 bg-blue-600 text-white rounded font-medium">Save</button>
+                                        <button type="button" onClick={() => setIsCreating(false)} className="px-2 py-1 rounded hover:bg-red-500">Cancel</button>
+                                        <button type="submit" className="px-2 py-1 hover:bg-blue-500 rounded font-medium">Save</button>
                                     </div>
                                 </form>
                             ) : (
                                 <button 
                                     onClick={() => setIsCreating(true)}
-                                    className="w-full border border-dashed border-slate-300 text-slate-600 rounded-md p-2 text-xs font-semibold hover:border-blue-500 hover:text-blue-600 transition-colors"
+                                    className="w-full border border-dashed rounded-md p-2 text-xs font-semibold hover:border-blue-500 hover:text-blue-600"
                                 >
-                                    + Create New Workspace
+                                    + New Project
                                 </button>
                             )}
 
-                            {/* Projects List Loop */}
+                            {/* Projects List */}
                             <div className="space-y-2">
-                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">All Workspaces</span>
                                 {projectStore.isLoading ? (
                                     <p className="text-xs text-slate-400 animate-pulse">Loading project index...</p>
                                 ) : (
@@ -130,20 +132,18 @@ export const ProjectSidebar = observer(() => {
                                             <div 
                                                 key={project.id}
                                                 onClick={() => {
-                                                    // Trigger project switch orchestration sequence
                                                     canvasStore.changeProject(project);
                                                 }}
-                                                className={`p-3 rounded-lg border text-left cursor-pointer transition-all ${
+                                                className={`p-3 project-card border-white/40  rounded-lg border text-left cursor-pointer transition-all ${
                                                     isActive 
-                                                        ? "bg-blue-50 border-blue-200 text-blue-900 shadow-sm" 
-                                                        : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50 hover:border-slate-200"
+                                                        ? "bg-blue-200 text-blue-500" 
+                                                        : "hover:text-blue-300 hover:border-blue-300"
                                                 }`}
                                             >
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-xs font-bold">{project.name}</span>
-                                                    {isActive && <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">Active</span>}
                                                 </div>
-                                                <p className="text-[11px] text-slate-400 mt-1 truncate">{project.description}</p>
+                                                <p className="text-[11px] mt-1 truncate">{project.description}</p>
                                             </div>
                                         );
                                     })
@@ -151,14 +151,13 @@ export const ProjectSidebar = observer(() => {
                             </div>
                         </div>
                     ) : (
-                        /* SUMMARY VIEW TAB PANEL */
-                        <div className="space-y-4">
-                            <p className="text-xs text-slate-500 font-medium">Active Workspace Details:</p>
-                            <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
-                                <h4 className="text-xs font-bold text-slate-800">{currentActiveProject?.name}</h4>
-                                <p className="text-xs text-slate-500 mt-1">{currentActiveProject?.description}</p>
+                        /* Project Summary/overview */
+                        <div className="space-y-4 p-4 project-summary rounded-lg">
+                            <div className="p-1">
+                                <h4 className="text-xs font-bold">{currentActiveProject?.name}</h4>
+                                <p className="text-xs  mt-1">{currentActiveProject?.description}</p>
                             </div>
-                            <p className="text-xs text-slate-400 italic">Analytical aggregation loops will drop here next...</p>
+                            <p className="text-xs italic">Analytical aggregation loops will drop here next...</p>
                         </div>
                     )}
                 </div>
