@@ -5,7 +5,7 @@ import { BaseNode } from "./BaseNode";
 
 export const GroupNode = observer((nodeData: NodeProps) => {
     // const { setNodes } = useReactFlow;
-    const {id, data, selected} = nodeData
+    const { data } = nodeData
    
     return (
         <BaseNode {...nodeData}>

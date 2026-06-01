@@ -1,5 +1,4 @@
 import { useReactFlow, type Edge, type Node } from '@xyflow/react';
-import React from 'react';
 
 interface SelectionToolbarProps {
     isVisible: boolean;
@@ -9,11 +8,11 @@ interface SelectionToolbarProps {
 }
 
 export const SelectionToolbar = ({ isVisible, selectedObjects, onClose, onGroup }: SelectionToolbarProps) => {
-    const { deleteElements, getNodes, setEdges } = useReactFlow();
+    const { deleteElements } = useReactFlow();
 
     if (!isVisible) return null;
 
-    const {nodes, edges} = selectedObjects
+    const {nodes } = selectedObjects
 
     const handleDeleteSelected = async () => {
         try {

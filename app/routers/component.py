@@ -47,7 +47,7 @@ async def create_component(component: Component, session: Session = Depends(get_
     return component
 
 @router.get("/diagram")
-async def read_components(parent_id: Optional[int]=None, project_id: Optional[int]=None, session: Session = Depends(get_session)):
+async def read_diagram_components(parent_id: Optional[int]=None, project_id: Optional[int]=None, session: Session = Depends(get_session)):
    
 
     if not project_id or project_id is None:

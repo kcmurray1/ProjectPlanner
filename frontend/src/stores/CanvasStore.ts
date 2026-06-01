@@ -1,7 +1,6 @@
 
 import { makeAutoObservable, runInAction } from "mobx";
 import type { Node } from "@xyflow/react";
-// import { CustomApiRequest, type GetComponent } from "./FetchApI";
 import { NodeStore } from "./NodeStore";
 import { TaskStore, type ObservableTaskModel } from "./TaskStore";
 import { ProjectStore } from "./ProjectStore";
@@ -118,6 +117,13 @@ export class CanvasStore {
 
         let payload = {"title": "task title", "description": "Add a task using a btn"}                  
         await this.taskStore.createTask(payload, node);
+    }
+
+    async createProject(projectName: string) {
+
+        const newProject = await this.projectStore.create(projectName);
+
+        this.changeProject(newProject);
     }
 
 

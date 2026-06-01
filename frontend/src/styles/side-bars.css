@@ -1,5 +1,5 @@
 .project-sidebar {
-    background-color: var(--bg);
+    background-color: var(--bg-alt);
     color: var(--text-h);
 }
 
@@ -16,4 +16,8 @@
 
 .project-summary {
     background-color: var(--accent-bg);
+}
+
+.project-rail {
+    background-color: var(--bg);
 }

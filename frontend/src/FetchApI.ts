@@ -1,6 +1,3 @@
-import type { Component } from "react"
-
-
 interface ITask {
     id: number
     title: string

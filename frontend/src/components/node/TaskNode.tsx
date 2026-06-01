@@ -2,7 +2,7 @@ import { type NodeProps, Handle, Position } from "@xyflow/react";
 import React from "react";
 
 import { canvasStore } from "../../stores/CanvasStore";
-import { ObservableNodeModel } from "../../stores/NodeStore";
+import {type  ObservableNodeModel } from "../../stores/NodeStore";
 import { ObservableTaskModel } from "../../stores/TaskStore";
 
 import { observer } from "mobx-react-lite";
@@ -80,7 +80,7 @@ const TaskItem = (task : ObservableTaskModel) => {
 
 
 export const TaskNode = observer((nodeData: NodeProps) => {
-    const {id, data, selected} = nodeData;
+    const {id } = nodeData;
     const node = canvasStore.getNode(id);
 
     let progressColor = '#22c55e';
@@ -127,7 +127,7 @@ export const TaskNode = observer((nodeData: NodeProps) => {
                 </div>
                
                 
-                <button onClick={(e) => handleAddTask(node)}
+                <button onClick={() => handleAddTask(node)}
                 className="nodrag nopan absolute bottom-2 right-2 flex items-center justify-center"
                 title="Add Task"
                 >

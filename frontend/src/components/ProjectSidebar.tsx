@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { canvasStore } from "../stores/CanvasStore"; 
-import { Folder, ListCheck } from "lucide-react";
+import { Folder, ListCheck} from "lucide-react";
+import { ProjectCard } from "./ProjectCard";
 
 
 
@@ -9,7 +10,7 @@ import { Folder, ListCheck } from "lucide-react";
 export const ProjectSidebar = observer(() => {
  
     const { projectStore } = canvasStore;
-    
+
     const currentActiveProject = canvasStore.currentProject;
 
     // Local UI state for project creation form inputs
@@ -21,19 +22,20 @@ export const ProjectSidebar = observer(() => {
         projectStore.fetchAllProjects();
     }, []);
 
-    // const handleCreateSubmit = async (e: React.FormEvent) => {
-    //     e.preventDefault();
-    //     if (!newProjectName.trim()) return;
-    //     await projectStore.createProject(newProjectName, "Custom workspace description");
-    //     setNewProjectName("");
-    //     setIsCreating(false);
-    // };
+    const handleCreateSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newProjectName) return;
+        await canvasStore.createProject(newProjectName);
+    
+        setNewProjectName("");
+        setIsCreating(false);
+    };
 
     return (
-        <div className="project-sidebar absolute top-0 left-0 h-full flex z-40 pointer-events-none">
+        <div className="absolute top-0 left-0 h-full flex z-40 pointer-events-none">
             
             {/* 1. VERTICAL navbar */}
-            <div className="h-full w-16 flex flex-col items-center py-4 space-y-4 pointer-events-auto">
+            <div className="project-rail h-full w-16 flex flex-col items-center py-4 space-y-4 pointer-events-auto">
                 <button
                     onClick={() => {
                         if (projectStore.isSidebarOpen && projectStore.activeTab === "explorer") {
@@ -75,7 +77,7 @@ export const ProjectSidebar = observer(() => {
 
             {/* 2. THE EXPANDABLE DRAWER CONTENT */}
             <div 
-                className={`h-full w-[400px] shadow-2xl flex flex-col pointer-events-auto ${
+                className={`project-sidebar h-full w-[400px] shadow-2xl flex flex-col pointer-events-auto ${
                     projectStore.isSidebarOpen ? "block" : "hidden"
                 }`}
             >
@@ -86,19 +88,13 @@ export const ProjectSidebar = observer(() => {
                             {projectStore.activeTab === "explorer" ? "Projects" : "Project Overview"}
                         </h3>
                     </div>
-                    <button 
-                        onClick={() => projectStore.toggleSidebar()}
-                        className="w-6 h-6 flex items-center justify-center hover:text-slate-600 font-bold"
-                    >
-                        ✕
-                    </button>
                 </div>
 
-                <div className="flex-1 p-5 overflow-y-auto">
+                <div className="flex-1 p-5 ">
                     {projectStore.activeTab === "explorer" ? (
                         <div className="space-y-4">
                             {isCreating ? (
-                                <form  className="p-3 rounded-md space-y-2">
+                                <form onSubmit={handleCreateSubmit} className="p-3 rounded-md space-y-2">
                                     <input 
                                         type="text"
                                         placeholder="Project Name..."
@@ -128,24 +124,12 @@ export const ProjectSidebar = observer(() => {
                                 ) : (
                                     projectStore.projects.map((project) => {
                                         const isActive = currentActiveProject?.id === project.id;
-                                        return (
-                                            <div 
-                                                key={project.id}
-                                                onClick={() => {
-                                                    canvasStore.changeProject(project);
-                                                }}
-                                                className={`p-3 project-card border-white/40  rounded-lg border text-left cursor-pointer transition-all ${
-                                                    isActive 
-                                                        ? "bg-blue-200 text-blue-500" 
-                                                        : "hover:text-blue-300 hover:border-blue-300"
-                                                }`}
-                                            >
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs font-bold">{project.name}</span>
-                                                </div>
-                                                <p className="text-[11px] mt-1 truncate">{project.description}</p>
-                                            </div>
-                                        );
+                                        
+                                        return <ProjectCard 
+                                            key={project.id} 
+                                            onSelect={() => canvasStore.changeProject(project)} 
+                                            onDelete={() => canvasStore.projectStore.delete(project.id)}
+                                            isActive={isActive} project={project}/>
                                     })
                                 )}
                             </div>

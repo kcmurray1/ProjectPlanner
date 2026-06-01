@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, Component } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   useReactFlow,
   ReactFlow,
@@ -37,7 +37,7 @@ import { ProjectSidebar } from './components/ProjectSidebar';
 
 const nodeTypes = {taskNode: TaskNode, groupNode: GroupNode}
 
-const nodeNames = {taskNode: "taskNode", group: "groupNode"}
+// const nodeNames = {taskNode: "taskNode", group: "groupNode"}
 const groupName = "groupNode"
 
 const fitViewOptions: FitViewOptions = {
@@ -72,6 +72,7 @@ export const ProjectCanvas = observer(() => {
 
     const loadNodes = useCallback(async (paneID: number, currentProjectID: number) => {
         try {
+          
             const res = await CustomApiRequest<{project: ProjectType, nodes: GetComponents, edges: Edge[]}>(`components/diagram?parent_id=${paneID}&project_id=${currentProjectID}`, null, "GET")
 
             const {project, nodes, edges} = res    
@@ -117,7 +118,7 @@ export const ProjectCanvas = observer(() => {
     useEffect( () => 
     {
         loadNodes(canvasStore.currentPane, canvasStore.currentProject.id);
-    }, [canvasStore.currentPane, canvasStore.currentProject.id])
+    }, [canvasStore.currentPane, canvasStore.currentProject?.id, loadNodes])
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -224,7 +225,7 @@ export const ProjectCanvas = observer(() => {
 
             return true
         } catch (err) {
-            console.log(err);
+            console.error(err);
             return false
         }
         
@@ -393,8 +394,9 @@ export const ProjectCanvas = observer(() => {
     return (
         
         <div className="flex h-screen w-full overflow-hidden flex-col" >
-            <div className="w-full px-6 py-3">
+            <div className="w-full px-6 py-3 flex flex-row" style={{justifyContent: 'space-between'}}>
                 <PaneBreadcrumbs />
+
             </div>
             <div 
                 id="rf-viewport-wrapper" 

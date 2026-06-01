@@ -10,7 +10,7 @@ interface ContextMenuProps {
   closeMenu: () => void;
 }
 
-export const ContextMenu = observer(({ id, top, left, flowX, flowY, closeMenu }: ContextMenuProps) => {
+export const ContextMenu = observer(({ id, top, left, closeMenu }: ContextMenuProps) => {
   
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
