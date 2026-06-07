@@ -211,6 +211,7 @@ export const ProjectCanvas = observer(() => {
 
 
     const handleBeforeDelete: OnBeforeDelete<Node, Edge> = useCallback(
+        // FIXME: also update mobx store to maintain consistency
         async({nodes, edges}) => {
         try {
             if (edges.length > 0)

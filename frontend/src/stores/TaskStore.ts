@@ -2,7 +2,6 @@
 import { makeAutoObservable, runInAction} from "mobx";
 import { CustomApiRequest } from "./../FetchApI";
 import type { CanvasStore } from "./CanvasStore";
-import type { ObservableNodeModel } from "./NodeStore";
 
 
 interface Task {
@@ -52,15 +51,38 @@ export class TaskStore {
         this.canvasStore = rootStore; 
     }
 
-    async createTask(taskData: any, node: ObservableNodeModel) {             
+    addTask(taskData: Task) {
+        const newTaskModel =  new ObservableTaskModel(
+                    taskData.id,
+                    taskData.title,
+                    taskData.status,
+                    taskData.description
+            )
+        this.tasksMap.set(String(taskData.id), newTaskModel)
+        return newTaskModel;
+    }
+
+    async createTask(nodeID: string) {
         try {
-            const newTask = await CustomApiRequest<Task>(`components/${node.id}/tasks`, taskData, "POST")
-            runInAction(() =>{
-                this.canvasStore.selectedTask = node.addTask(newTask);
+            let defaultTask = {"title": "task title", "description": "Add a task using a btn"}
+            const newTask = await CustomApiRequest<Task>(`components/${nodeID}/tasks`, defaultTask, "POST")
+            return runInAction(() =>{
+                return this.addTask(newTask);
             })
-            
-        } catch (err) {
+         } catch (err) {
             console.error("failed to create task", err);
+            return null;
+        }
+    }
+
+    async delete(task: ObservableTaskModel) {
+        try {
+            await CustomApiRequest<{status: string}>(`tasks/${task.id}`, {}, "DELETE")
+            runInAction(() => {
+                this.tasksMap.delete(String(task.id));
+            })
+        } catch (err) {
+
         }
     }
 }

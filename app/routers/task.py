@@ -29,3 +29,15 @@ async def update_task(id: int, data: dict, session: Session = Depends(get_sessio
     session.refresh(db_task)
 
     return db_task
+
+@router.delete("/{id}")
+async def delete_edge(id: int, session: Session = Depends(get_session)):
+    try:
+        statement = delete(Task).where(Task.id == id)
+        session.exec(statement)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print('err', e)
+    
+    return {"status": "ok!"}

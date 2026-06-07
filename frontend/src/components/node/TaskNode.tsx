@@ -4,7 +4,7 @@ import React from "react";
 import { canvasStore } from "../../stores/CanvasStore";
 import {type  ObservableNodeModel } from "../../stores/NodeStore";
 import { ObservableTaskModel } from "../../stores/TaskStore";
-
+import { Plus, X, Trash, CircleMinus} from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { BaseNode } from "./BaseNode";
 
@@ -35,8 +35,17 @@ const handleAddTask = async (node: ObservableNodeModel | undefined) => {
     canvasStore.createTask(node.id);
 }
 
-const TaskItem = (task : ObservableTaskModel) => {
+interface TaskItemProps {
+    task: ObservableTaskModel;
+    node: ObservableNodeModel;
+}
 
+const TaskItem = ({task, node} : TaskItemProps) => {
+
+    const handleTaskDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        canvasStore.deleteTask(task, node);
+    }
     const openTaskBar = (e: React.MouseEvent) => {
         e.stopPropagation();
 
@@ -64,13 +73,14 @@ const TaskItem = (task : ObservableTaskModel) => {
                     task.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                     task.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                     task.status === 'not_started' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                    'bg-slate-100 text-slate-600 border-slate-300' // fallback / todo / backlog
+                    'bg-slate-50 text-slate-600 border-slate-300' // fallback / todo / backlog
                 }`}
             >
                 <option value="not_started">Not Started</option>
                 <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
             </select>
+            {node.isEditing && <CircleMinus onClick={handleTaskDelete} color="Red" className="shrink-0 p-1"/>}
         </div>
                 
     )
@@ -81,18 +91,26 @@ const TaskItem = (task : ObservableTaskModel) => {
 
 export const TaskNode = observer((nodeData: NodeProps) => {
     const {id } = nodeData;
-    const node = canvasStore.getNode(id);
+    // const node = canvasStore.getNode(id);
+
+    const { nodeStore } = canvasStore;
+    const node = nodeStore.nodesMap.get(id);
+
 
     let progressColor = '#22c55e';
 
-    if (node && node.progress < 25) {
+    if (node && nodeStore.progress(node) < 25) {
         progressColor = '#ef4444'; // Red
-    } else if (node && node.progress <= 50) {
+    } else if (node && nodeStore.progress(node) <= 50) {
         progressColor = '#f97316'; // Orange
-    } else if (node && node.progress < 75) {
+    } else if (node && nodeStore.progress(node) < 75) {
         progressColor = '#dfef86'; // Light Green
-    } else if (node && node.progress < 100) {
+    } else if (node && nodeStore.progress(node) < 100) {
         progressColor = '#4ade80'; 
+    }
+
+    if (node?.isEditing) {
+        console.log('editing node', node.id)
     }
 
     // 2. Apply it via inline styles to your header element
@@ -104,7 +122,7 @@ export const TaskNode = observer((nodeData: NodeProps) => {
                 transition: 'color 0.3s ease'
             }}
         >
-            {node ? Math.round(node.progress) : 0}%
+            {node ? Math.round(nodeStore.progress(node)) : 0}%
         </p>
     );
 
@@ -121,19 +139,17 @@ export const TaskNode = observer((nodeData: NodeProps) => {
                 <div className="tasks-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}
                     onClick={(e)=>e.stopPropagation()}
                 >
-                    {node?.tasks.map((task) =>
-                        TaskItem(task)
+                    {node && canvasStore.nodeStore.tasks(node).map((task) =>
+                        TaskItem({task, node})
                     )}
-                </div>
-               
-                
-                <button onClick={() => handleAddTask(node)}
-                className="nodrag nopan absolute bottom-2 right-2 flex items-center justify-center"
-                title="Add Task"
-                >
-                    Add
-                </button>
-             </div>
+                </div>    
+            </div>
+  
+            <Plus onClick={()=> handleAddTask(node)}
+                  className="nodrag nopan absolute bottom-2 right-2 flex items-center justify-center"
+            />
+       
+            
 
         </BaseNode>
     );

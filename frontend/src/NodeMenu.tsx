@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { observableFlowStore } from "./MyStore";
+import { canvasStore } from "./stores/CanvasStore";
 
 interface ContextMenuProps {
   id: string;
@@ -15,7 +15,7 @@ export const ContextMenu = observer(({ id, top, left, closeMenu }: ContextMenuPr
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
     // Triggers MobX to activate input fields inside the node view layer
-    observableFlowStore.setNodeToEdit(id, true);
+    canvasStore.setNodeToEdit(id, true);
     closeMenu();
   };
 
@@ -56,6 +56,8 @@ export const ContextMenu = observer(({ id, top, left, closeMenu }: ContextMenuPr
       }}
       onClick={(e) => e.stopPropagation()} // Prevents the pane click trigger from firing early
     >
+      <p>Node Menu</p>
+      <hr style={{ margin: '4px 0', borderColor: '#f1f5f9' }} />
       <button  onClick={handleEdit}>Edit</button>
       <button  onClick={handleCopy}>Copy</button>
       <button  onClick={handleClone}>Clone</button>

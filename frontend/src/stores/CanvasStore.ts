@@ -1,7 +1,7 @@
 
 import { makeAutoObservable, runInAction } from "mobx";
 import type { Node } from "@xyflow/react";
-import { NodeStore } from "./NodeStore";
+import { NodeStore, ObservableNodeModel } from "./NodeStore";
 import { TaskStore, type ObservableTaskModel } from "./TaskStore";
 import { ProjectStore } from "./ProjectStore";
 
@@ -32,7 +32,6 @@ export class CanvasStore {
 
     currentPane = 0;
     currentProject: ProjectType = {id: 0, name: "invalid", description: "invalid description"};
-    isProjectSidebarOpen: boolean = true;
     paneHistory: Pane[] = [{id:"0", label: "home"}]
 
     
@@ -65,9 +64,9 @@ export class CanvasStore {
                 let nodeModel = this.nodeStore.addNode(node);
                 
                 if (node.tasks) {
-                    nodeModel.tasks = [];
                     node.tasks.forEach((taskData: any) => {
-                        nodeModel.addTask(taskData);
+                        this.taskStore.addTask(taskData);
+                        nodeModel.taskIDs.push(taskData.id);
                     })
                 }
             })
@@ -77,6 +76,7 @@ export class CanvasStore {
     changeProject(project: ProjectType){
         runInAction(()=>{
             this.currentProject = project;
+            this.paneHistory = [{id:"0", label: "home"}];
             this.currentPane = 0;
         })
     }
@@ -100,6 +100,14 @@ export class CanvasStore {
         this.paneHistory = this.paneHistory.slice(0, target + 1);
     }
 
+    setNodeToEdit(id: string, isEditing: boolean){
+        const node = this.nodeStore.nodesMap.get(id);
+        if(node) {
+            node.isEditing = isEditing;
+            node.isSelected = isEditing;
+        }
+    }
+
     updateLabel(id: string, newLabel: string){
         const node = this.nodeStore.nodesMap.get(id);
 
@@ -112,11 +120,22 @@ export class CanvasStore {
 
     async createTask(nodeID: string) {
         const node = this.nodeStore.nodesMap.get(nodeID);
-
         if (!node) {return;}
+        const newTask = await this.taskStore.createTask(nodeID);
+        runInAction(() =>{
+            if (!newTask) {return;}
+            node.taskIDs.push(newTask.id);
+            this.selectedTask = newTask;
+        })
+    
+    }
 
-        let payload = {"title": "task title", "description": "Add a task using a btn"}                  
-        await this.taskStore.createTask(payload, node);
+    async deleteTask(task: ObservableTaskModel, node: ObservableNodeModel) {
+        await this.taskStore.delete(task);
+        runInAction(() => {
+            node.taskIDs = node.taskIDs.filter((taskID) =>  taskID !== task.id);
+        })
+
     }
 
     async createProject(projectName: string) {

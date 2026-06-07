@@ -13,7 +13,7 @@ export interface Project {
 export class ProjectStore {
     canvasStore: CanvasStore
     projects: Project[] = []
-    isSidebarOpen: boolean = true;
+    isSidebarOpen: boolean = false;
     activeTab: "explorer" | "summary" = "explorer";
     isLoading: boolean = false;
 

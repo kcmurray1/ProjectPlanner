@@ -201,10 +201,14 @@ class ObservableFlowStore {
 
     setNodeToEdit(id: string, isEditing: boolean){
         const node = this.nodesMap.get(id);
+        console.log(this.nodesMap)
         if(node) {
             console.log('editing node', id);
             node.isEditing = isEditing;
             node.isSelected = isEditing;
+        }
+        else {
+            console.log("no node with id", id);
         }
     }
 

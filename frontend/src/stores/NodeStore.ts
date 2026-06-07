@@ -13,8 +13,7 @@ export class ObservableNodeModel {
     isEditing: boolean = false;
     isSelected: boolean = false;
    
-
-    tasks: ObservableTaskModel[] = []
+    taskIDs: number[] = []
 
     constructor(id: string, name: string, type: string, parent_id: string | null) {
         this.id = id;
@@ -23,28 +22,6 @@ export class ObservableNodeModel {
         this.parent_id = parent_id;
         makeAutoObservable(this);
     }
-
-    addTask(taskData: any) {
-        const newTask = new ObservableTaskModel(
-                taskData.id,
-                taskData.title,
-                taskData.status,
-                taskData.description
-            )
-        this.tasks.push(
-            newTask
-        );
-
-        return newTask
-    }
-
-    get progress() {
-        if (this.tasks.length === 0) return 100;
-        return (this.tasks.filter(t => t.status === "completed").length / this.tasks.length) * 100;
-    }
-
-    
-
     
 }
 
@@ -60,6 +37,23 @@ export class NodeStore {
 
     clear() {
         this.nodesMap.clear();
+    }
+
+    get tasks() {
+        return (node: ObservableNodeModel): ObservableTaskModel[] => {
+            if (!node) return [];
+            return node.taskIDs.map(id => this.canvasStore.taskStore.tasksMap.get(String(id))).filter((task): task is ObservableTaskModel => !!task);
+        }
+    }
+
+    get progress() {
+        return (node: ObservableNodeModel): number => {
+            if (!node) return 0;
+            const nodeTasks = this.tasks(node);
+            if(nodeTasks.length === 0) return 100;
+            return (nodeTasks.filter(
+                t => t.status === "completed").length / nodeTasks.length) * 100;
+        }
     }
 
     addNode(node: any) {
