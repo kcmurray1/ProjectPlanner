@@ -4,7 +4,7 @@ import React from "react";
 import { canvasStore } from "../../stores/CanvasStore";
 import {type  ObservableNodeModel } from "../../stores/NodeStore";
 import { ObservableTaskModel } from "../../stores/TaskStore";
-import { Plus, X, Trash, CircleMinus} from "lucide-react";
+import { Plus, CircleMinus, Pencil, PencilOff} from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { BaseNode } from "./BaseNode";
 
@@ -109,13 +109,14 @@ export const TaskNode = observer((nodeData: NodeProps) => {
         progressColor = '#4ade80'; 
     }
 
-    if (node?.isEditing) {
-        console.log('editing node', node.id)
-    }
 
-    // 2. Apply it via inline styles to your header element
     const progress = (
-        <p 
+        <>
+            {node?.isEditing ? 
+            <PencilOff className="h-4.5" onClick={() => canvasStore.toggleNodeEdit(id)}/>
+            : <Pencil className="h-4.5" onClick={() => canvasStore.toggleNodeEdit(id)}/> }
+            <Plus onClick={()=> handleAddTask(node)} />
+            <p 
             style={{ 
                 color: progressColor, 
                 fontWeight: 'bold',
@@ -124,6 +125,8 @@ export const TaskNode = observer((nodeData: NodeProps) => {
         >
             {node ? Math.round(nodeStore.progress(node)) : 0}%
         </p>
+        </>
+      
     );
 
  
@@ -136,6 +139,7 @@ export const TaskNode = observer((nodeData: NodeProps) => {
             <BiDirectionalHandle id="bottom" position={Position.Bottom} />
 
             <div className="default-node-body">
+                
                 <div className="tasks-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}
                     onClick={(e)=>e.stopPropagation()}
                 >
@@ -143,14 +147,8 @@ export const TaskNode = observer((nodeData: NodeProps) => {
                         TaskItem({task, node})
                     )}
                 </div>    
+                
             </div>
-  
-            <Plus onClick={()=> handleAddTask(node)}
-                  className="nodrag nopan absolute bottom-2 right-2 flex items-center justify-center"
-            />
-       
-            
-
         </BaseNode>
     );
 });

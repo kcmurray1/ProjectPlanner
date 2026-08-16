@@ -14,8 +14,7 @@ export const ContextMenu = observer(({ id, top, left, closeMenu }: ContextMenuPr
   
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // Triggers MobX to activate input fields inside the node view layer
-    canvasStore.setNodeToEdit(id, true);
+    canvasStore.toggleNodeEdit(id);
     closeMenu();
   };
 

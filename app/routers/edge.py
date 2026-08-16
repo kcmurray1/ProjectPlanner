@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
-from app.dependencies import get_session
-from app.models.edge import Edge
+from dependencies import get_session
+from models.edge import Edge
 from sqlalchemy.exc import IntegrityError
 from typing import List 
 
@@ -12,11 +12,11 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 async def read_edges(session: Session = Depends(get_session)):
     return session.exec(select(Edge)).all()
 
-@router.post("/")
+@router.post("")
 async def create_edge(edge: Edge, session: Session = Depends(get_session)):
     print('creating',edge)
     session.add(edge)

@@ -41,11 +41,11 @@ export class ProjectStore {
     }
 
 
-    async create(projectName: string) {
+    async create(projectName: string, projectDescription: string) {
         const default_desc = "A custom project"
         const payload = {
             name: projectName,
-            description: default_desc
+            description: projectDescription ? projectDescription : default_desc
         }
         const data = await CustomApiRequest<Project>("projects", payload, "POST");
 

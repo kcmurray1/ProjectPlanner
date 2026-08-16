@@ -100,11 +100,11 @@ export class CanvasStore {
         this.paneHistory = this.paneHistory.slice(0, target + 1);
     }
 
-    setNodeToEdit(id: string, isEditing: boolean){
+    toggleNodeEdit(id: string){
         const node = this.nodeStore.nodesMap.get(id);
         if(node) {
-            node.isEditing = isEditing;
-            node.isSelected = isEditing;
+            node.isEditing = !node.isEditing;
+            node.isSelected = !node.isEditing;
         }
     }
 
@@ -138,9 +138,9 @@ export class CanvasStore {
 
     }
 
-    async createProject(projectName: string) {
+    async createProject(projectName: string, projectDescription: string) {
 
-        const newProject = await this.projectStore.create(projectName);
+        const newProject = await this.projectStore.create(projectName, projectDescription);
 
         this.changeProject(newProject);
     }

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
-from app.dependencies import get_session
-from app.models.component import (
+from dependencies import get_session
+from models.component import (
     Component, 
     ComponentReadWithRelationships, 
     ComponentRead, 
@@ -10,7 +10,7 @@ from app.models.component import (
     Project,
     ProjectRead
 )
-from app.models.edge import Edge
+from models.edge import Edge
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 router = APIRouter(
@@ -21,7 +21,7 @@ router = APIRouter(
 from typing import List
 from sqlalchemy.orm import selectinload
 
-@router.get("/", response_model=List[ComponentReadWithRelationships])
+@router.get("", response_model=List[ComponentReadWithRelationships])
 async def read_components(session: Session = Depends(get_session)):
     statement = (
         select(Component)
@@ -35,7 +35,7 @@ async def read_components(session: Session = Depends(get_session)):
     
     return [ComponentReadWithRelationships.model_validate(item) for item in results]
 
-@router.post("/")
+@router.post("")
 async def create_component(component: Component, session: Session = Depends(get_session)):
 
     if component.parent_id == 0:

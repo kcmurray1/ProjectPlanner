@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: planning-db
+    restart: always
+    env_file:
+      - ./dev/apps.env
+    volumes:
+      - /opt/postgres/data:/var/lib/postgresql/data
+    networks:
+      - planning-net
+
+  backend:
+    image: project-planner-backend:v0.0.1
+    build: ./app
+    container_name: planning-backend
+    restart: always
+    env_file:
+      - ./dev/apps.env
+    ports:
+      - "5001:5001"
+    depends_on:
+      - db
+    networks:
+      - planning-net
+
+  frontend:
+    image: project-planner-frontend:v0.0.1
+    build: ./frontend
+    container_name: planning-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - planning-net
+
+networks:
+  planning-net:
+    driver: bridge

@@ -15,6 +15,7 @@ export const ProjectSidebar = observer(() => {
 
     // Local UI state for project creation form inputs
     const [newProjectName, setNewProjectName] = useState("");
+    const [newProjectDesc, setNewProjectDesc] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
     // Fetch initial projects when sidebar mounts
@@ -25,9 +26,10 @@ export const ProjectSidebar = observer(() => {
     const handleCreateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newProjectName) return;
-        await canvasStore.createProject(newProjectName);
+        await canvasStore.createProject(newProjectName, newProjectDesc);
     
         setNewProjectName("");
+        setNewProjectDesc("");
         setIsCreating(false);
     };
 
@@ -100,6 +102,13 @@ export const ProjectSidebar = observer(() => {
                                         placeholder="Project Name..."
                                         value={newProjectName}
                                         onChange={(e) => setNewProjectName(e.target.value)}
+                                        className="w-full text-xs p-2 border  rounded focus:outline-none"
+                                        autoFocus
+                                    />
+                                    <textarea 
+                                        placeholder="Project Description..."
+                                        value={newProjectDesc}
+                                        onChange={(e) => setNewProjectDesc(e.target.value)}
                                         className="w-full text-xs p-2 border  rounded focus:outline-none"
                                         autoFocus
                                     />

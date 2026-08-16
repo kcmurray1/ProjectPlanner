@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
-from app.dependencies import get_session
-from app.models.component import Task
+from dependencies import get_session
+from models.component import Task
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 
@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 async def read_tasks(session: Session = Depends(get_session)):
     return session.exec(select(Task)).all()
 

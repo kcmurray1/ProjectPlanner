@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, delete
 from sqlalchemy.orm import selectinload
-from app.dependencies import get_session
-from app.models.component import Project, ProjectRead, Component
+from dependencies import get_session
+from models.component import Project, ProjectRead, Component
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 
@@ -13,13 +13,14 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 async def read_projects(session: Session = Depends(get_session)):
     res = session.exec(select(Project)).all()
     return res
 
-@router.post("/")
+@router.post("")
 async def create_project(project: Project, session: Session = Depends(get_session)):
+    print("creating project....")
     session.add(project)
     session.commit()
     session.refresh(project)
