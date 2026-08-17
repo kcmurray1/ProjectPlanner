@@ -33,7 +33,7 @@ export class ProjectStore {
 
     async fetchAllProjects() {
         try {
-            const data = await CustomApiRequest<Project[]>("projects/", null, "GET");
+            const data = await CustomApiRequest<Project[]>("projects", null, "GET");
             runInAction(() => { this.projects = data; });
         } catch (err) {
             console.error("Failed to load projects", err);
@@ -53,6 +53,20 @@ export class ProjectStore {
 
         return data;
 
+
+
+    }
+
+    async updateName(id: number, newProjectName: string) {
+        try {
+            const payload = {
+                name: newProjectName
+            }
+            await CustomApiRequest<{name: string}>(`projects/${id}`, payload, "PATCH");
+        }
+        catch (err) {
+            console.error('failed to update task', err);
+        }
 
 
     }

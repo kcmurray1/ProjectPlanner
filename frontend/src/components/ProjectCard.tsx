@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { EllipsisVertical, Edit3, ExternalLink, Trash2 } from "lucide-react";
+import { EllipsisVertical, Edit3, ExternalLink, Trash2, Check, X } from "lucide-react";
 import type { Project } from "../stores/ProjectStore";
 
 interface ProjectCardProps {
@@ -7,11 +7,16 @@ interface ProjectCardProps {
     isActive: boolean;
     onSelect: () => void;
     onDelete: () => void;
+    onUpdate: (id: number, newName: string) => void;
 }
 
-export const ProjectCard = ({ project, isActive, onSelect, onDelete}: ProjectCardProps) => {
-    const [showMenu, setShowMenu] = useState(false);
+export const ProjectCard = ({ project, isActive, onSelect, onDelete, onUpdate}: ProjectCardProps) => {
+    const [showMenu, setShowMenu] = useState<boolean>(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    const [isEditing, setIsEditing] = useState<boolean>(false);
+
+    const [projectName, setProjectName] = useState<string>(project.name)
 
 
     useEffect(() => {
@@ -27,6 +32,23 @@ export const ProjectCard = ({ project, isActive, onSelect, onDelete}: ProjectCar
         return () => document.removeEventListener("mousedown", handleOutsideClick);
     }, [showMenu]);
 
+
+    const handleNameChange = () =>
+    {
+        onUpdate(project.id, projectName)
+        project.name = projectName
+        setIsEditing(false);
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key !== 'Enter' && e.key !== 'Escape') return;
+        if (e.key === 'Enter') {
+            handleNameChange()
+        };
+        if (e.key === 'Escape') setProjectName(project.name);
+        setIsEditing(false);
+    };
+
     return (
         <div 
             onClick={onSelect}
@@ -37,7 +59,36 @@ export const ProjectCard = ({ project, isActive, onSelect, onDelete}: ProjectCar
             }`}
         >
             <div className="flex justify-between items-center flex-row">
-                <span className="text-xs font-bold">{project.name}</span>
+                {isEditing ? (
+                    <div className="flex items-center space-x-1 flex-1 mr-2">
+                        <input
+                        type="text"
+                        value={projectName}
+                        onChange={(e) => setProjectName(e.target.value)}
+                        autoFocus
+                        className="text-xs font-bold px-1 py-0.5 border border-slate-300 rounded focus:outline-none focus:border-blue-500 w-full"
+                        onKeyDown={handleKeyDown}
+                        />
+                        <button
+                        type="button"
+                        className="p-1 text-emerald-600 hover:text-emerald-700"
+                        onClick={handleNameChange}
+                        >
+                        <Check/>
+                        </button>
+
+                        <button
+                        type="button"
+                        className="p-1 text-rose-500 hover:text-rose-600"
+                        onClick={()=> {setIsEditing(false); setProjectName(project.name)}}
+                        >
+                        <X/>    
+                        </button>
+                    </div>
+                ): (
+                    <span className="text-xs font-bold">{project.name}</span>
+                )}
+               
                 
                 {/* Options Button Anchor Container */}
                 <div className="relative" ref={menuRef}>
@@ -59,7 +110,7 @@ export const ProjectCard = ({ project, isActive, onSelect, onDelete}: ProjectCar
                             className="absolute left-full top-0 ml-2 w-36 bg-white border border-slate-200 rounded-md shadow-lg py-1 z-50 text-slate-700 pointer-events-auto"
                         >
                             <button
-                                // onClick={() => { onEdit?.(); setShowMenu(false); }}
+                                onClick={() => {setIsEditing(true); setShowMenu(false)}}
                                 className="w-full px-3 py-1.5 text-left text-xs flex items-center space-x-2 hover:bg-slate-50 transition-colors"
                             >
                                 <Edit3 className="w-3.5 h-3.5 text-slate-400" />
@@ -86,8 +137,10 @@ export const ProjectCard = ({ project, isActive, onSelect, onDelete}: ProjectCar
                         </div>
                     )}
                 </div>
+                
             </div>
             <p className="text-[11px] mt-1 truncate">{project.description}</p>
+            
         </div>
     );
 };

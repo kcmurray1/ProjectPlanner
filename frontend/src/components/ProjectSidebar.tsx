@@ -138,6 +138,7 @@ export const ProjectSidebar = observer(() => {
                                             key={project.id} 
                                             onSelect={() => canvasStore.changeProject(project)} 
                                             onDelete={() => canvasStore.projectStore.delete(project.id)}
+                                            onUpdate={canvasStore.projectStore.updateName}
                                             isActive={isActive} project={project}/>
                                     })
                                 )}

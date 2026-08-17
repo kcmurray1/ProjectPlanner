@@ -38,8 +38,8 @@ export type GetComponents = IComponent[]
 
 export type GetComponent = IComponent 
 
-// use http://localhost:8000 when running locally otherwise just '/api'
-const BASE_URL = "/api";
+// use http://localhost:5001 when running locally otherwise just '/api'
+const BASE_URL = "http://localhost:5001";
 
 
 
