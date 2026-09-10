@@ -91,8 +91,6 @@ const TaskItem = ({task, node} : TaskItemProps) => {
 
 export const TaskNode = observer((nodeData: NodeProps) => {
     const {id } = nodeData;
-    // const node = canvasStore.getNode(id);
-
     const { nodeStore } = canvasStore;
     const node = nodeStore.nodesMap.get(id);
 

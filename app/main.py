@@ -20,7 +20,7 @@ app.include_router(component.router)
 app.include_router(edge.router)
 app.include_router(task.router)
 app.include_router(project.router)
-SQLModel.metadata.create_all(engine)
+# SQLModel.metadata.create_all(engine)
 
 
 @app.get("/")

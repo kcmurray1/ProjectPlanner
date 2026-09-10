@@ -30,8 +30,6 @@ export const BaseNode = observer(({id, data, selected, children, headerRight}: B
             console.log(value);
             await CustomApiRequest<{name: string}>(`components/${id}`, {name: value}, "PATCH")
             
-           
-        
         } catch (err) {
         console.error("Failed to change node name:", err);
         }
@@ -103,8 +101,10 @@ export const BaseNode = observer(({id, data, selected, children, headerRight}: B
                     </div>
                 )}
             </div>
-
+            <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col">
             {children}
+            </div>
+            {/* {children} */}
 
 
 

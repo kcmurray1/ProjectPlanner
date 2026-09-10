@@ -21,12 +21,10 @@ import {
 } from '@xyflow/react';
 
 
-import { TaskNode, GroupNode } from './components/node';
+import { TaskNode, GroupNode, NoteNode } from './components/node';
 import { CustomApiRequest, type GetComponents, type GetComponent} from './FetchApI';
 import { observer } from 'mobx-react-lite';
-
 import { canvasStore } from './stores/CanvasStore';
-
 import { ContextMenu } from './NodeMenu';
 import { PaneBreadcrumbs } from './PaneBreadcrumb';
 import { useCanvasShortcuts } from './shortcuts';
@@ -35,9 +33,8 @@ import { PaneMenu } from './PaneMenu';
 import { TaskSidebar } from './TaskSidebar';
 import { ProjectSidebar } from './components/ProjectSidebar';
 
-const nodeTypes = {taskNode: TaskNode, groupNode: GroupNode}
+const nodeTypes = {taskNode: TaskNode, groupNode: GroupNode, noteNode: NoteNode}
 
-// const nodeNames = {taskNode: "taskNode", group: "groupNode"}
 const groupName = "groupNode"
 
 const fitViewOptions: FitViewOptions = {
@@ -88,7 +85,7 @@ export const ProjectCanvas = observer(() => {
                 return {
                 id: String(component.id),
                 tasks: component.tasks,
-                data: { label: component.name },
+                data: { label: component.name, description: component.description},
                 position: { x: component.x_pos, y: component.y_pos },
                 type: component.type,
                 width: component.width,
@@ -98,6 +95,7 @@ export const ProjectCanvas = observer(() => {
                 }
                 
             });
+
         
 
             const myEdges = edges.map((edge) => ({

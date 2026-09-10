@@ -21,7 +21,7 @@ async def read_tasks(session: Session = Depends(get_session)):
 async def update_task(id: int, data: dict, session: Session = Depends(get_session)):
     db_task = session.get(Task, id)
 
-    db_task.model_dump(exclude_unset=True)
+    # db_task.model_dump(exclude_unset=True)
     db_task.sqlmodel_update(data)
 
     session.add(db_task)

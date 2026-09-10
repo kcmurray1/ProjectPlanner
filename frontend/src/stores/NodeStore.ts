@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 import type { Node } from "@xyflow/react";
 import { CustomApiRequest, type GetComponent } from "./../FetchApI";
 import { ObservableTaskModel } from "./TaskStore";
@@ -12,14 +12,16 @@ export class ObservableNodeModel {
     isPriority: boolean = false;
     isEditing: boolean = false;
     isSelected: boolean = false;
+    description: string;
    
     taskIDs: number[] = []
 
-    constructor(id: string, name: string, type: string, parent_id: string | null) {
+    constructor(id: string, name: string, type: string, parent_id: string | null, description: string | null) {
         this.id = id;
         this.label = name;
         this.type = type;
         this.parent_id = parent_id;
+        this.description = description || "";
         makeAutoObservable(this);
     }
     
@@ -57,16 +59,35 @@ export class NodeStore {
     }
 
     addNode(node: any) {
-        const { label } = node.data as {label: string};
+        // const { label, description } = node.data as {label: string};
+        const { label, description } = node.data as { label: string; description: string }
         const nodeModel = new ObservableNodeModel(
             node.id,
             label,
             node.type ? node.type : "textNode",
-            node.parentId ? node.parentId : null
+            node.parentId ? node.parentId : null,
+            description
         )
 
         this.nodesMap.set(node.id, nodeModel);
         return nodeModel;
+    }
+
+    async updateDesc (node: ObservableNodeModel, newDescription: string) {
+        const previousDescription = node.description;
+        runInAction(() => {
+            node.description = newDescription;
+        });
+
+        try {
+            await CustomApiRequest(`components/${node.id}`, { description: newDescription }, "PATCH");
+        } catch (err) {
+            console.error("Failed to update node description:", err);
+            // Revert on failure
+            runInAction(() => {
+                node.description = previousDescription;
+            });
+        }
     }
 
     async createNode (x: number, y: number, type: string) {

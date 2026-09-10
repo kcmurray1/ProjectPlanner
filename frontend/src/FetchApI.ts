@@ -15,6 +15,7 @@ interface IComponent {
     type: string
     group_id: number
     parent_id: string
+    description: string
     tasks: ITask[]
 }
 

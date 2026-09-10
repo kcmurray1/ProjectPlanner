@@ -43,6 +43,9 @@ class ComponentReadWithRelationships(ProjectRead):
 class ComponentType(str, Enum):
     DEFAULT = "taskNode"
     GROUP = "groupNode"
+    NOTE = "noteNode"
+    MEDIA = "mediaNode"
+    
 
 
 class ComponentBase(SQLModel):
@@ -53,6 +56,10 @@ class ComponentBase(SQLModel):
     height: int
     width: int
     type: ComponentType = Field(default=ComponentType.DEFAULT)
+    
+    content: Optional[str] = Field(default=None)       
+    file_url: Optional[str] = Field(default=None)
+    file_type: Optional[str] = Field(default=None)
 
 class Component(ComponentBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

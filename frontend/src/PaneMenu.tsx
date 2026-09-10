@@ -11,9 +11,16 @@ export const PaneMenu = ({ menu , onAddNode}: PaneMenuProps) => {
                 onClick={() => onAddNode(menu.x, menu.y, "taskNode")}
                 className="pane-menu-btn"
               >
-                + Add Component
+                + Add TaskNode
               </button>
-               <button 
+              <button 
+                onClick={() => onAddNode(menu.x, menu.y, "noteNode")}
+                className="pane-menu-btn"
+              >
+                + Add NoteNode
+              </button>
+              
+              <button 
                 onClick={() => onAddNode(menu.x, menu.y, "groupNode")}
                 className="pane-menu-btn"
               >

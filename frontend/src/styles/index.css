@@ -104,6 +104,9 @@ p {
 }
 
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 
 .custom-group-component {

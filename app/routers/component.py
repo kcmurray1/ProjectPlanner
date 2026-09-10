@@ -37,10 +37,8 @@ async def read_components(session: Session = Depends(get_session)):
 
 @router.post("")
 async def create_component(component: Component, session: Session = Depends(get_session)):
-
     if component.parent_id == 0:
         component.parent_id = None
-    print(component);
     session.add(component)
     session.commit()
     session.refresh(component)

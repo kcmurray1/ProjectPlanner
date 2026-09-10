@@ -25,6 +25,9 @@ dist-ssr
 
 dev/
 
+alembic/versions/__pycache__/
+alembic/__pycache__/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
