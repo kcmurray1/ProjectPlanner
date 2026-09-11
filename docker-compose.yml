@@ -11,8 +11,10 @@ services:
       - planning-net
 
   backend:
-    image: project-planner-backend:v0.0.1
-    build: ./app
+    image: project-planner-backend:v1
+    build: 
+      context: .
+      dockerfile: app/Dockerfile
     container_name: planning-backend
     restart: always
     env_file:
@@ -25,7 +27,7 @@ services:
       - planning-net
 
   frontend:
-    image: project-planner-frontend:v0.0.1
+    image: project-planner-frontend:v1
     build: ./frontend
     container_name: planning-frontend
     restart: always
